@@ -7,90 +7,99 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0e0e0f;
-    --surface: #1a1a1d;
-    --surface2: #242428;
-    --border: #2e2e33;
-    --accent: #e8ff47;
-    --accent2: #ff6b35;
-    --text: #f0efe8;
-    --muted: #888780;
-    --danger: #ff4444;
-    --font-display: 'Syne', sans-serif;
-    --font-mono: 'Space Mono', monospace;
-    --radius: 6px;
+    --bg: #0e0e0f; --surface: #1a1a1d; --surface2: #242428; --border: #2e2e33;
+    --accent: #e8ff47; --accent2: #ff6b35; --text: #f0efe8; --muted: #888780;
+    --danger: #ff4444; --font-display: 'Syne', sans-serif; --font-mono: 'Space Mono', monospace; --radius: 6px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: var(--font-display); min-height: 100vh; padding: 2rem; }
   h1 { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.03em; color: var(--accent); margin-bottom: 0.25rem; }
   h2 { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
-  h3 { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.6rem; }
 
-  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; max-width: 1100px; margin: 0 auto; }
+  .layout { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; max-width: 1400px; margin: 0 auto; }
   .layout-header { grid-column: 1/-1; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 1rem; }
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
   .card-full { grid-column: 1/-1; }
+  .col-span-2 { grid-column: span 2; }
 
   .launch-bar { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-  .btn { font-family: var(--font-display); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.04em; padding: 0.6rem 1.2rem; border-radius: var(--radius); border: 1.5px solid var(--border); background: var(--surface2); color: var(--text); cursor: pointer; transition: all 0.15s; text-decoration: none; display: inline-block; }
+  .btn { font-family: var(--font-display); font-size: 0.82rem; font-weight: 700; letter-spacing: 0.04em; padding: 0.55rem 1.1rem; border-radius: var(--radius); border: 1.5px solid var(--border); background: var(--surface2); color: var(--text); cursor: pointer; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; }
   .btn:hover { border-color: var(--accent); color: var(--accent); }
   .btn-accent { background: var(--accent); color: #0e0e0f; border-color: var(--accent); }
   .btn-accent:hover { background: #fff; border-color: #fff; color: #0e0e0f; }
   .btn-danger { border-color: var(--danger); color: var(--danger); background: transparent; }
   .btn-danger:hover { background: var(--danger); color: #fff; }
-  .btn-sm { font-size: 0.75rem; padding: 0.35rem 0.8rem; }
+  .btn-sm { font-size: 0.72rem; padding: 0.3rem 0.75rem; }
 
-  label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 0.4rem; margin-top: 0.9rem; }
+  label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 0.35rem; margin-top: 0.85rem; }
   label:first-child { margin-top: 0; }
-  input[type=text], input[type=number], select, textarea {
+  input[type=text], select, textarea {
     width: 100%; background: var(--bg); border: 1px solid var(--border);
     border-radius: var(--radius); color: var(--text); font-family: var(--font-mono);
-    font-size: 0.85rem; padding: 0.55rem 0.75rem; transition: border 0.15s;
+    font-size: 0.82rem; padding: 0.5rem 0.7rem; transition: border 0.15s;
   }
-  input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  input[type=text]:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
   textarea { resize: vertical; min-height: 100px; }
   select option { background: #1a1a1d; }
 
   input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
   .range-row { display: flex; align-items: center; gap: 0.75rem; }
-  .range-val { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); min-width: 3.5rem; text-align: right; }
+  .range-val { font-family: var(--font-mono); font-size: 0.82rem; color: var(--accent); min-width: 3.5rem; text-align: right; }
 
-  .text-list { display: flex; flex-direction: column; gap: 0.4rem; max-height: 360px; overflow-y: auto; padding-right: 4px; }
+  /* Text list */
+  .text-list { display: flex; flex-direction: column; gap: 0.35rem; max-height: 480px; overflow-y: auto; padding-right: 4px; }
   .text-list::-webkit-scrollbar { width: 4px; }
   .text-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-  .text-item { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.6rem 0.85rem; cursor: pointer; transition: border-color 0.15s; display: flex; align-items: center; gap: 0.75rem; }
+  .text-item { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.55rem 0.8rem; cursor: pointer; transition: border-color 0.15s; display: flex; align-items: center; gap: 0.6rem; }
   .text-item:hover { border-color: var(--muted); }
   .text-item.active { border-color: var(--accent); }
-  .text-num { font-family: var(--font-mono); font-size: 0.65rem; color: var(--muted); min-width: 1.5rem; }
-  .text-title { font-size: 0.85rem; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .text-num { font-family: var(--font-mono); font-size: 0.62rem; color: var(--muted); min-width: 1.4rem; }
+  .text-title { font-size: 0.82rem; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .text-preset-badge { font-family: var(--font-mono); font-size: 0.58rem; padding: 0.15rem 0.45rem; border-radius: 3px; border: 1px solid var(--border); color: var(--muted); white-space: nowrap; max-width: 90px; overflow: hidden; text-overflow: ellipsis; }
+  .text-preset-badge.assigned { border-color: var(--accent2); color: var(--accent2); }
 
-  .color-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.4rem; }
-  .color-swatch { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border 0.15s; }
+  /* Preset list */
+  .preset-list { display: flex; flex-direction: column; gap: 0.35rem; max-height: 220px; overflow-y: auto; padding-right: 4px; margin-bottom: 0.75rem; }
+  .preset-list::-webkit-scrollbar { width: 4px; }
+  .preset-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .preset-item { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.5rem 0.8rem; cursor: pointer; transition: border-color 0.15s; display: flex; align-items: center; gap: 0.6rem; }
+  .preset-item:hover { border-color: var(--muted); }
+  .preset-item.active { border-color: var(--accent2); }
+  .preset-name { font-size: 0.82rem; font-weight: 600; flex: 1; }
+  .preset-desc { font-family: var(--font-mono); font-size: 0.6rem; color: var(--muted); }
+
+  /* Colors */
+  .color-row { display: flex; gap: 0.45rem; flex-wrap: wrap; margin-top: 0.35rem; }
+  .color-swatch { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.15s; }
   .color-swatch:hover { transform: scale(1.15); }
   .color-swatch.sel { border-color: var(--accent); }
 
-  .info-strip { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--border); }
+  .info-strip { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); margin-top: 0.9rem; padding-top: 0.85rem; border-top: 1px solid var(--border); }
   .info-strip span { color: var(--accent); }
 
-  .toggle-row { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.85rem; }
-  .toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+  .toggle-row { display: flex; align-items: center; gap: 0.7rem; margin-top: 0.85rem; }
+  .toggle { position: relative; width: 38px; height: 20px; flex-shrink: 0; }
   .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
-  .toggle-slider { position: absolute; inset: 0; background: var(--surface2); border: 1px solid var(--border); border-radius: 11px; cursor: pointer; transition: 0.2s; }
-  .toggle-slider::after { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: var(--muted); border-radius: 50%; transition: 0.2s; }
+  .toggle-slider { position: absolute; inset: 0; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: 0.2s; }
+  .toggle-slider::after { content: ''; position: absolute; width: 12px; height: 12px; left: 3px; top: 3px; background: var(--muted); border-radius: 50%; transition: 0.2s; }
   .toggle input:checked + .toggle-slider { background: var(--accent); border-color: var(--accent); }
   .toggle input:checked + .toggle-slider::after { transform: translateX(18px); background: #0e0e0f; }
-  .toggle-label { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  .toggle-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
 
-  @media (max-width: 700px) { .layout { grid-template-columns: 1fr; } .card-full, .card { grid-column: 1/-1; } }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 600px) { .layout { grid-template-columns: 1fr; } .col-span-2 { grid-column: 1/-1; } }
 </style>
 </head>
 <body>
 <div class="layout">
+
+  <!-- Header -->
   <div class="layout-header">
     <div>
       <h1>TELEPROMPTER</h1>
-      <p style="font-size:0.75rem;color:var(--muted);margin-top:0.2rem;font-family:var(--font-mono)">MuA — Einstellungen</p>
+      <p style="font-size:0.72rem;color:var(--muted);margin-top:0.2rem;font-family:var(--font-mono)">MuA — Einstellungen</p>
     </div>
     <div class="launch-bar">
       <a class="btn" href="conductor.html" target="_blank">⊞ Dirigent</a>
@@ -98,11 +107,11 @@
     </div>
   </div>
 
-  <!-- Text list -->
+  <!-- Column 1: Text list -->
   <div class="card" style="grid-row: span 2;">
     <h2>Texte</h2>
     <div class="text-list" id="textList"></div>
-    <div style="display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap;">
+    <div style="display:flex;gap:0.45rem;margin-top:0.7rem;flex-wrap:wrap;">
       <button class="btn btn-sm" onclick="addText()">+ Neu</button>
       <button class="btn btn-sm btn-danger" onclick="deleteText()">Löschen</button>
       <button class="btn btn-sm" onclick="moveUp()">↑</button>
@@ -110,174 +119,142 @@
     </div>
   </div>
 
-  <!-- Text editor -->
+  <!-- Column 2: Text editor -->
   <div class="card">
     <h2>Text bearbeiten</h2>
     <label>Titel</label>
     <input type="text" id="editTitle" placeholder="z.B. Arie I — Liebe" oninput="saveEdit()">
     <label>Inhalt</label>
-    <textarea id="editContent" rows="8" placeholder="Text hier eingeben…" oninput="saveEdit()"></textarea>
+    <textarea id="editContent" rows="7" placeholder="Text hier eingeben…" oninput="saveEdit()"></textarea>
+
+    <hr class="divider">
+
+    <label>Scroll-Preset zuweisen</label>
+    <select id="editPreset" onchange="saveEdit()">
+      <option value="">— Globale Einstellungen (kein Preset) —</option>
+    </select>
+
     <div class="info-strip" id="editInfo">Kein Text ausgewählt</div>
   </div>
 
-  <!-- Scroll settings -->
+  <!-- Column 3: Preset library -->
   <div class="card">
-    <h2>Scroll-Einstellungen</h2>
-    <label>Richtung</label>
-    <select id="settDir" onchange="saveSettings()">
-      <option value="up">↑ Unten → Oben (klassisch)</option>
-      <option value="down">↓ Oben → Unten</option>
-      <option value="left">← Rechts → Links</option>
-      <option value="right">→ Links → Rechts</option>
-      <option value="diag-ul">↖ Diagonal oben-links</option>
-      <option value="diag-ur">↗ Diagonal oben-rechts</option>
-      <option value="diag-dl">↙ Diagonal unten-links</option>
-      <option value="diag-dr">↘ Diagonal unten-rechts</option>
-    </select>
-
-    <label>Scrollgeschwindigkeit</label>
-    <div class="range-row">
-      <input type="range" id="settSpeed" min="10" max="300" step="5" value="60" oninput="saveSettings();document.getElementById('speedVal').textContent=this.value+' px/s'">
-      <span class="range-val" id="speedVal">60 px/s</span>
+    <h2>Preset-Bibliothek</h2>
+    <div class="preset-list" id="presetList"></div>
+    <div style="display:flex;gap:0.45rem;flex-wrap:wrap;margin-bottom:1rem;">
+      <button class="btn btn-sm" onclick="addPreset()">+ Neu</button>
+      <button class="btn btn-sm" onclick="duplicatePreset()">⧉ Kopie</button>
+      <button class="btn btn-sm btn-danger" onclick="deletePreset()">Löschen</button>
     </div>
 
-    <label>Schriftgröße</label>
-    <div class="range-row">
-      <input type="range" id="settSize" min="24" max="160" step="2" value="72" oninput="saveSettings();document.getElementById('sizeVal').textContent=this.value+'px'">
-      <span class="range-val" id="sizeVal">72px</span>
-    </div>
+    <hr class="divider" style="margin-top:0;">
 
-    <label>Zeilenabstand</label>
-    <div class="range-row">
-      <input type="range" id="settLineH" min="10" max="30" step="1" value="16" oninput="saveSettings();document.getElementById('lineHVal').textContent=(this.value/10).toFixed(1)">
-      <span class="range-val" id="lineHVal">1.6</span>
-    </div>
-
-    <div class="toggle-row">
-      <label class="toggle"><input type="checkbox" id="settKeepText" onchange="saveSettings()"><span class="toggle-slider"></span></label>
-      <span class="toggle-label">Vergangener Text bleibt sichtbar</span>
-    </div>
-    <div class="toggle-row">
-      <label class="toggle"><input type="checkbox" id="settMirror" onchange="saveSettings()"><span class="toggle-slider"></span></label>
-      <span class="toggle-label">Text horizontal spiegeln</span>
+    <div id="presetEditor">
+      <p style="font-size:0.75rem;color:var(--muted);font-family:var(--font-mono);">Kein Preset ausgewählt.</p>
     </div>
   </div>
 
-  <!-- Visual settings -->
-  <div class="card">
-    <h2>Erscheinungsbild</h2>
-    <label>Schriftart</label>
-    <select id="settFont" onchange="saveSettings()">
-      <option value="'Syne', sans-serif">Syne</option>
-      <option value="'Space Mono', monospace">Space Mono</option>
-      <option value="Georgia, serif">Georgia</option>
-      <option value="'Times New Roman', serif">Times New Roman</option>
-      <option value="Impact, sans-serif">Impact</option>
-      <option value="'Arial', sans-serif">Arial</option>
-      <option value="'Helvetica Neue', sans-serif">Helvetica Neue</option>
-    </select>
+  <!-- Column 2+3: Global visual settings -->
+  <div class="card col-span-2">
+    <h2>Globale Erscheinung</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;">
+      <div>
+        <label style="margin-top:0;">Schriftart</label>
+        <select id="settFont" onchange="saveGlobal()">
+          <option value="'Syne', sans-serif">Syne</option>
+          <option value="'Space Mono', monospace">Space Mono</option>
+          <option value="Georgia, serif">Georgia</option>
+          <option value="'Times New Roman', serif">Times New Roman</option>
+          <option value="Impact, sans-serif">Impact</option>
+          <option value="'Arial', sans-serif">Arial</option>
+          <option value="'Helvetica Neue', sans-serif">Helvetica Neue</option>
+        </select>
 
-    <label>Textfarbe</label>
-    <div class="color-row" id="colorSwatches"></div>
+        <label>Schriftgröße</label>
+        <div class="range-row">
+          <input type="range" id="settSize" min="24" max="160" step="2" value="72" oninput="saveGlobal();document.getElementById('sizeVal').textContent=this.value+'px'">
+          <span class="range-val" id="sizeVal">72px</span>
+        </div>
 
-    <label>Hintergrundfarbe</label>
-    <div class="color-row" id="bgSwatches"></div>
+        <label>Schriftgewicht</label>
+        <select id="settWeight" onchange="saveGlobal()">
+          <option value="400">Normal</option>
+          <option value="600">Halbfett</option>
+          <option value="700" selected>Fett</option>
+          <option value="800">Sehr fett</option>
+        </select>
 
-    <label>Ausrichtung</label>
-    <select id="settAlign" onchange="saveSettings()">
-      <option value="left">Linksbündig</option>
-      <option value="center">Zentriert</option>
-      <option value="right">Rechtsbündig</option>
-    </select>
+        <label>Ausrichtung</label>
+        <select id="settAlign" onchange="saveGlobal()">
+          <option value="left">Linksbündig</option>
+          <option value="center">Zentriert</option>
+          <option value="right">Rechtsbündig</option>
+        </select>
+      </div>
+      <div>
+        <label style="margin-top:0;">Textfarbe</label>
+        <div class="color-row" id="colorSwatches"></div>
 
-    <label>Seitenränder</label>
-    <div class="range-row">
-      <input type="range" id="settPad" min="0" max="300" step="10" value="80" oninput="saveSettings();document.getElementById('padVal').textContent=this.value+'px'">
-      <span class="range-val" id="padVal">80px</span>
+        <label>Hintergrundfarbe</label>
+        <div class="color-row" id="bgSwatches"></div>
+
+        <label>Seitenränder</label>
+        <div class="range-row">
+          <input type="range" id="settPad" min="0" max="300" step="10" value="80" oninput="saveGlobal();document.getElementById('padVal').textContent=this.value+'px'">
+          <span class="range-val" id="padVal">80px</span>
+        </div>
+
+        <div class="toggle-row" style="margin-top:1rem;">
+          <label class="toggle"><input type="checkbox" id="settMirror" onchange="saveGlobal()"><span class="toggle-slider"></span></label>
+          <span class="toggle-label">Text horizontal spiegeln</span>
+        </div>
+      </div>
     </div>
-
-    <label>Schriftgewicht</label>
-    <select id="settWeight" onchange="saveSettings()">
-      <option value="400">Normal</option>
-      <option value="600">Halbfett</option>
-      <option value="700" selected>Fett</option>
-      <option value="800">Sehr fett</option>
-    </select>
   </div>
 
-  <!-- Footer / data -->
+  <!-- Footer -->
   <div class="card card-full" style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
-    <h3 style="margin:0;">Daten:</h3>
+    <h2 style="margin:0;">Daten:</h2>
     <button class="btn btn-sm" onclick="exportData()">↓ Exportieren</button>
     <button class="btn btn-sm" onclick="document.getElementById('importFile').click()">↑ Importieren</button>
     <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
-    <button class="btn btn-sm btn-danger" onclick="if(confirm('Alle Texte zurücksetzen?'))initDefaultTexts()">↺ Zurücksetzen</button>
-    <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--muted);margin-left:auto;">Leertaste / Fußpedal = nächsten Text starten</span>
+    <button class="btn btn-sm btn-danger" onclick="if(confirm('Alles zurücksetzen?'))initDefaults()">↺ Zurücksetzen</button>
+    <span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--muted);margin-left:auto;">Leertaste / Fußpedal = nächsten Text starten</span>
   </div>
-</div>
+
+</div><!-- .layout -->
 
 <script>
 const STORE = 'tp_';
 const TEXT_COLORS = ['#f0efe8','#ffffff','#e8ff47','#ff6b35','#00ffcc','#ffaacc','#aaddff'];
 const BG_COLORS   = ['#000000','#0e0e0f','#1a1a1d','#0a0a20','#0d1a0d','#200a0a','#1a1500'];
+const DIR_LABELS  = { up:'↑ Unten→Oben', down:'↓ Oben→Unten', left:'← Rechts→Links', right:'→ Links→Rechts', 'diag-ul':'↖ Diagonal OL', 'diag-ur':'↗ Diagonal OR', 'diag-dl':'↙ Diagonal UL', 'diag-dr':'↘ Diagonal UR' };
 
-let texts = [], selIdx = 0;
+let texts = [], presets = [], selTextIdx = 0, selPresetIdx = -1;
 
-function getSettings() { return JSON.parse(localStorage.getItem(STORE+'settings') || '{}'); }
+/* ── Storage helpers ── */
+function getGlobal()  { return JSON.parse(localStorage.getItem(STORE+'global')   || '{}'); }
+function getPresets() { return JSON.parse(localStorage.getItem(STORE+'presets')  || '[]'); }
+function getTexts()   { return JSON.parse(localStorage.getItem(STORE+'texts')    || '[]'); }
 
-function saveSettings() {
-  const s = {
-    dir:      document.getElementById('settDir').value,
-    speed:    +document.getElementById('settSpeed').value,
-    size:     +document.getElementById('settSize').value,
-    lineH:    +(document.getElementById('settLineH').value / 10).toFixed(1),
-    keepText: document.getElementById('settKeepText').checked,
-    mirror:   document.getElementById('settMirror').checked,
-    font:     document.getElementById('settFont').value,
-    align:    document.getElementById('settAlign').value,
-    pad:      +document.getElementById('settPad').value,
-    weight:   document.getElementById('settWeight').value,
+function saveGlobal() {
+  const g = {
+    font:      document.getElementById('settFont').value,
+    size:      +document.getElementById('settSize').value,
+    weight:    document.getElementById('settWeight').value,
+    align:     document.getElementById('settAlign').value,
+    pad:       +document.getElementById('settPad').value,
+    mirror:    document.getElementById('settMirror').checked,
     textColor: activeColor('colorSwatches') || '#f0efe8',
     bgColor:   activeColor('bgSwatches')    || '#000000',
   };
-  localStorage.setItem(STORE+'settings', JSON.stringify(s));
-  broadcast({ type: 'settings', data: s });
+  localStorage.setItem(STORE+'global', JSON.stringify(g));
+  broadcast({ type: 'global', data: g });
 }
 
-function loadSettingsUI() {
-  const s = getSettings();
-  const set = (id, val) => { if (val !== undefined && document.getElementById(id)) document.getElementById(id).value = val; };
-  if (s.dir)    set('settDir', s.dir);
-  if (s.speed)  { set('settSpeed', s.speed);  document.getElementById('speedVal').textContent = s.speed + ' px/s'; }
-  if (s.size)   { set('settSize', s.size);    document.getElementById('sizeVal').textContent  = s.size  + 'px'; }
-  if (s.lineH)  { set('settLineH', s.lineH*10); document.getElementById('lineHVal').textContent = parseFloat(s.lineH).toFixed(1); }
-  if (s.keepText !== undefined) document.getElementById('settKeepText').checked = s.keepText;
-  if (s.mirror  !== undefined) document.getElementById('settMirror').checked   = s.mirror;
-  if (s.font)   set('settFont', s.font);
-  if (s.align)  set('settAlign', s.align);
-  if (s.pad !== undefined) { set('settPad', s.pad); document.getElementById('padVal').textContent = s.pad + 'px'; }
-  if (s.weight) set('settWeight', s.weight);
-}
-
-function activeColor(id) {
-  const el = document.querySelector('#' + id + ' .color-swatch.sel');
-  return el ? el.dataset.c : null;
-}
-
-function buildSwatches(id, colors, key, def) {
-  const cont = document.getElementById(id);
-  cont.innerHTML = '';
-  const cur = getSettings()[key] || def;
-  colors.forEach(c => {
-    const d = document.createElement('div');
-    d.className = 'color-swatch' + (c === cur ? ' sel' : '');
-    d.style.background = c;
-    d.style.outline = c === '#000000' ? '1px solid #333' : '';
-    d.dataset.c = c;
-    d.title = c;
-    d.onclick = () => { cont.querySelectorAll('.color-swatch').forEach(x => x.classList.remove('sel')); d.classList.add('sel'); saveSettings(); };
-    cont.appendChild(d);
-  });
+function savePresets() {
+  localStorage.setItem(STORE+'presets', JSON.stringify(presets));
+  broadcast({ type: 'presets', data: presets });
 }
 
 function saveTexts() {
@@ -285,31 +262,181 @@ function saveTexts() {
   broadcast({ type: 'texts', data: texts });
 }
 
-function loadTexts() {
-  const raw = localStorage.getItem(STORE+'texts');
-  if (raw) texts = JSON.parse(raw);
-  else initDefaultTexts(false);
-  renderList(); selectText(0);
+function broadcast(msg) {
+  localStorage.setItem(STORE+'msg', JSON.stringify({ ...msg, ts: Date.now() }));
 }
 
-function initDefaultTexts(save = true) {
-  texts = Array.from({ length: 20 }, (_, i) => ({
-    id: Date.now() + i,
-    title: `Text ${i + 1}`,
-    content: `Hier kommt der ${i + 1}. Text für den Schauspieler.\n\nDieser Text wird vom Dirigenten mit dem Fußpedal gestartet.\n\nPlatzhalterinhalt — bitte ersetzen.`,
-    status: 'waiting'
-  }));
-  if (save) { saveTexts(); renderList(); selectText(0); }
-  else      { renderList(); selectText(0); }
+/* ── Global visual UI ── */
+function loadGlobalUI() {
+  const g = getGlobal();
+  const set = (id, v) => { if (v !== undefined && document.getElementById(id)) document.getElementById(id).value = v; };
+  if (g.font)   set('settFont', g.font);
+  if (g.size)   { set('settSize', g.size);   document.getElementById('sizeVal').textContent  = g.size  + 'px'; }
+  if (g.weight) set('settWeight', g.weight);
+  if (g.align)  set('settAlign', g.align);
+  if (g.pad !== undefined) { set('settPad', g.pad); document.getElementById('padVal').textContent = g.pad + 'px'; }
+  if (g.mirror !== undefined) document.getElementById('settMirror').checked = g.mirror;
 }
 
-function renderList() {
+function activeColor(id) {
+  const el = document.querySelector('#' + id + ' .color-swatch.sel');
+  return el ? el.dataset.c : null;
+}
+function buildSwatches(id, colors, key, def) {
+  const cont = document.getElementById(id);
+  cont.innerHTML = '';
+  const cur = getGlobal()[key] || def;
+  colors.forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'color-swatch' + (c === cur ? ' sel' : '');
+    d.style.background = c;
+    d.style.outline = c === '#000000' ? '1px solid #444' : '';
+    d.dataset.c = c;
+    d.title = c;
+    d.onclick = () => { cont.querySelectorAll('.color-swatch').forEach(x => x.classList.remove('sel')); d.classList.add('sel'); saveGlobal(); };
+    cont.appendChild(d);
+  });
+}
+
+/* ── Preset library ── */
+function defaultPreset(n) {
+  return { id: Date.now() + Math.random(), name: n || 'Neues Preset', dir: 'up', speed: 60, lineH: 1.6, keepText: false };
+}
+function presetDesc(p) {
+  return `${DIR_LABELS[p.dir]||p.dir} · ${p.speed}px/s · ${parseFloat(p.lineH).toFixed(1)} · ${p.keepText ? 'bleibt' : 'verschwindet'}`;
+}
+
+function renderPresetList() {
+  const el = document.getElementById('presetList');
+  el.innerHTML = '';
+  if (presets.length === 0) {
+    el.innerHTML = '<p style="font-size:0.72rem;color:var(--muted);font-family:var(--font-mono);padding:0.3rem 0;">Noch keine Presets.</p>';
+    return;
+  }
+  presets.forEach((p, i) => {
+    const d = document.createElement('div');
+    d.className = 'preset-item' + (i === selPresetIdx ? ' active' : '');
+    d.innerHTML = `<span class="preset-name">${p.name}</span><span class="preset-desc">${presetDesc(p)}</span>`;
+    d.onclick = () => selectPreset(i);
+    el.appendChild(d);
+  });
+  // also refresh preset dropdowns in text list & editor
+  rebuildPresetDropdowns();
+}
+
+function selectPreset(i) {
+  selPresetIdx = i;
+  renderPresetList();
+  renderPresetEditor();
+}
+
+function renderPresetEditor() {
+  const el = document.getElementById('presetEditor');
+  if (selPresetIdx < 0 || selPresetIdx >= presets.length) {
+    el.innerHTML = '<p style="font-size:0.75rem;color:var(--muted);font-family:var(--font-mono);">Kein Preset ausgewählt.</p>';
+    return;
+  }
+  const p = presets[selPresetIdx];
+  el.innerHTML = `
+    <label style="margin-top:0;">Name</label>
+    <input type="text" id="pName" value="${escHtml(p.name)}" oninput="savePresetEdit()">
+
+    <label>Richtung</label>
+    <select id="pDir" onchange="savePresetEdit()">
+      ${Object.entries(DIR_LABELS).map(([v,l]) => `<option value="${v}"${p.dir===v?' selected':''}>${l}</option>`).join('')}
+    </select>
+
+    <label>Geschwindigkeit</label>
+    <div class="range-row">
+      <input type="range" id="pSpeed" min="10" max="300" step="5" value="${p.speed}"
+        oninput="savePresetEdit();document.getElementById('pSpeedVal').textContent=this.value+' px/s'">
+      <span class="range-val" id="pSpeedVal">${p.speed} px/s</span>
+    </div>
+
+    <label>Zeilenabstand</label>
+    <div class="range-row">
+      <input type="range" id="pLineH" min="10" max="30" step="1" value="${Math.round(p.lineH*10)}"
+        oninput="savePresetEdit();document.getElementById('pLineHVal').textContent=(this.value/10).toFixed(1)">
+      <span class="range-val" id="pLineHVal">${parseFloat(p.lineH).toFixed(1)}</span>
+    </div>
+
+    <div class="toggle-row">
+      <label class="toggle"><input type="checkbox" id="pKeep" onchange="savePresetEdit()" ${p.keepText?'checked':''}><span class="toggle-slider"></span></label>
+      <span class="toggle-label">Vergangener Text bleibt sichtbar</span>
+    </div>
+  `;
+}
+
+function savePresetEdit() {
+  if (selPresetIdx < 0 || selPresetIdx >= presets.length) return;
+  const p = presets[selPresetIdx];
+  p.name     = document.getElementById('pName').value;
+  p.dir      = document.getElementById('pDir').value;
+  p.speed    = +document.getElementById('pSpeed').value;
+  p.lineH    = +(document.getElementById('pLineH').value / 10).toFixed(1);
+  p.keepText = document.getElementById('pKeep').checked;
+  savePresets();
+  renderPresetList();
+  // keep editor open (don't re-render editor, user is typing)
+  rebuildPresetDropdowns();
+}
+
+function addPreset() {
+  presets.push(defaultPreset(`Preset ${presets.length + 1}`));
+  savePresets();
+  selectPreset(presets.length - 1);
+}
+
+function duplicatePreset() {
+  if (selPresetIdx < 0 || selPresetIdx >= presets.length) return;
+  const copy = { ...presets[selPresetIdx], id: Date.now(), name: presets[selPresetIdx].name + ' (Kopie)' };
+  presets.push(copy);
+  savePresets();
+  selectPreset(presets.length - 1);
+}
+
+function deletePreset() {
+  if (selPresetIdx < 0 || selPresetIdx >= presets.length) return;
+  const pid = presets[selPresetIdx].id;
+  if (!confirm(`Preset "${presets[selPresetIdx].name}" löschen?`)) return;
+  presets.splice(selPresetIdx, 1);
+  // Remove from any text that used it
+  texts.forEach(t => { if (t.presetId === pid) t.presetId = null; });
+  saveTexts();
+  selPresetIdx = Math.min(selPresetIdx, presets.length - 1);
+  savePresets();
+  renderPresetList();
+  renderPresetEditor();
+  renderTextList();
+}
+
+function rebuildPresetDropdowns() {
+  // Update the text-editor dropdown
+  const sel = document.getElementById('editPreset');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Globale Einstellungen —</option>';
+  presets.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.name;
+    sel.appendChild(opt);
+  });
+  sel.value = cur;
+}
+
+/* ── Text list ── */
+function renderTextList() {
   const el = document.getElementById('textList');
   el.innerHTML = '';
   texts.forEach((t, i) => {
+    const p = t.presetId ? presets.find(x => String(x.id) === String(t.presetId)) : null;
     const d = document.createElement('div');
-    d.className = 'text-item' + (i === selIdx ? ' active' : '');
-    d.innerHTML = `<span class="text-num">${String(i+1).padStart(2,'0')}</span><span class="text-title">${t.title || '(kein Titel)'}</span>`;
+    d.className = 'text-item' + (i === selTextIdx ? ' active' : '');
+    d.innerHTML = `
+      <span class="text-num">${String(i+1).padStart(2,'0')}</span>
+      <span class="text-title">${t.title || '(kein Titel)'}</span>
+      <span class="text-preset-badge ${p ? 'assigned' : ''}">${p ? p.name : 'global'}</span>`;
     d.onclick = () => selectText(i);
     el.appendChild(d);
   });
@@ -317,87 +444,100 @@ function renderList() {
 
 function selectText(i) {
   if (i < 0 || i >= texts.length) return;
-  selIdx = i;
-  renderList();
+  selTextIdx = i;
+  renderTextList();
   const t = texts[i];
   document.getElementById('editTitle').value   = t.title   || '';
   document.getElementById('editContent').value = t.content || '';
+  rebuildPresetDropdowns();
+  document.getElementById('editPreset').value = t.presetId ? String(t.presetId) : '';
   updateEditInfo();
 }
 
 function updateEditInfo() {
   const words = (document.getElementById('editContent').value || '').split(/\s+/).filter(Boolean).length;
   document.getElementById('editInfo').innerHTML =
-    `Text <span>${selIdx + 1} / ${texts.length}</span> &nbsp;·&nbsp; <span>${words}</span> Wörter`;
+    `Text <span>${selTextIdx + 1} / ${texts.length}</span> &nbsp;·&nbsp; <span>${words}</span> Wörter`;
 }
 
 function saveEdit() {
-  if (selIdx < 0 || selIdx >= texts.length) return;
-  texts[selIdx].title   = document.getElementById('editTitle').value;
-  texts[selIdx].content = document.getElementById('editContent').value;
-  saveTexts(); renderList(); updateEditInfo();
+  if (selTextIdx < 0 || selTextIdx >= texts.length) return;
+  texts[selTextIdx].title    = document.getElementById('editTitle').value;
+  texts[selTextIdx].content  = document.getElementById('editContent').value;
+  const pVal = document.getElementById('editPreset').value;
+  texts[selTextIdx].presetId = pVal || null;
+  saveTexts();
+  renderTextList();
+  updateEditInfo();
 }
 
 function addText() {
-  texts.push({ id: Date.now(), title: `Text ${texts.length + 1}`, content: '', status: 'waiting' });
-  saveTexts(); renderList(); selectText(texts.length - 1);
+  texts.push({ id: Date.now(), title: `Text ${texts.length + 1}`, content: '', status: 'waiting', presetId: null });
+  saveTexts(); renderTextList(); selectText(texts.length - 1);
 }
-
 function deleteText() {
   if (texts.length <= 1) return;
-  if (!confirm(`"${texts[selIdx].title}" wirklich löschen?`)) return;
-  texts.splice(selIdx, 1);
-  selIdx = Math.min(selIdx, texts.length - 1);
-  saveTexts(); renderList(); selectText(selIdx);
+  if (!confirm(`"${texts[selTextIdx].title}" wirklich löschen?`)) return;
+  texts.splice(selTextIdx, 1);
+  selTextIdx = Math.min(selTextIdx, texts.length - 1);
+  saveTexts(); renderTextList(); selectText(selTextIdx);
 }
-
 function moveUp() {
-  if (selIdx <= 0) return;
-  [texts[selIdx-1], texts[selIdx]] = [texts[selIdx], texts[selIdx-1]];
-  selIdx--; saveTexts(); renderList(); selectText(selIdx);
+  if (selTextIdx <= 0) return;
+  [texts[selTextIdx-1], texts[selTextIdx]] = [texts[selTextIdx], texts[selTextIdx-1]];
+  selTextIdx--; saveTexts(); renderTextList(); selectText(selTextIdx);
 }
 function moveDown() {
-  if (selIdx >= texts.length - 1) return;
-  [texts[selIdx], texts[selIdx+1]] = [texts[selIdx+1], texts[selIdx]];
-  selIdx++; saveTexts(); renderList(); selectText(selIdx);
+  if (selTextIdx >= texts.length - 1) return;
+  [texts[selTextIdx], texts[selTextIdx+1]] = [texts[selTextIdx+1], texts[selTextIdx]];
+  selTextIdx++; saveTexts(); renderTextList(); selectText(selTextIdx);
 }
 
-function broadcast(msg) {
-  localStorage.setItem(STORE+'msg', JSON.stringify({ ...msg, ts: Date.now() }));
-}
-
+/* ── Export / Import ── */
 function exportData() {
-  const blob = new Blob([JSON.stringify({ texts, settings: getSettings() }, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'teleprompter-daten.json';
-  a.click();
+  const blob = new Blob([JSON.stringify({ texts, presets, global: getGlobal() }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'teleprompter-daten.json'; a.click();
 }
-
 function importData(e) {
   const f = e.target.files[0]; if (!f) return;
   const r = new FileReader();
   r.onload = ev => {
     try {
       const d = JSON.parse(ev.target.result);
-      if (d.texts)    { texts = d.texts; saveTexts(); renderList(); selectText(0); }
-      if (d.settings) {
-        localStorage.setItem(STORE+'settings', JSON.stringify(d.settings));
-        loadSettingsUI();
-        buildSwatches('colorSwatches', TEXT_COLORS, 'textColor', '#f0efe8');
-        buildSwatches('bgSwatches',    BG_COLORS,   'bgColor',   '#000000');
-      }
+      if (d.texts)   { texts   = d.texts;   saveTexts(); }
+      if (d.presets) { presets = d.presets; savePresets(); }
+      if (d.global)  { localStorage.setItem(STORE+'global', JSON.stringify(d.global)); loadGlobalUI(); buildSwatches('colorSwatches', TEXT_COLORS, 'textColor', '#f0efe8'); buildSwatches('bgSwatches', BG_COLORS, 'bgColor', '#000000'); }
+      renderPresetList(); renderTextList(); selectText(0);
     } catch(err) { alert('Fehler beim Importieren: ' + err.message); }
   };
   r.readAsText(f);
 }
+function initDefaults() {
+  texts = Array.from({ length: 20 }, (_, i) => ({ id: Date.now()+i, title: `Text ${i+1}`, content: `Platzhalter für Text ${i+1}.\n\nBitte ersetzen.`, status: 'waiting', presetId: null }));
+  presets = [
+    defaultPreset('Langsam klassisch'),
+    { ...defaultPreset('Schnell links'), dir: 'left', speed: 120 },
+    { ...defaultPreset('Diagonal'), dir: 'diag-ur', speed: 80, lineH: 1.8 },
+  ];
+  presets[0].speed = 40;
+  saveTexts(); savePresets();
+  renderPresetList(); renderTextList(); selectText(0);
+}
 
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ── Init ── */
 function init() {
-  loadTexts();
+  const rawTexts   = localStorage.getItem(STORE+'texts');
+  const rawPresets = localStorage.getItem(STORE+'presets');
+  texts   = rawTexts   ? JSON.parse(rawTexts)   : null;
+  presets = rawPresets ? JSON.parse(rawPresets)  : null;
+  if (!texts || !presets) initDefaults();
+  else { renderPresetList(); renderTextList(); selectText(0); }
+  loadGlobalUI();
   buildSwatches('colorSwatches', TEXT_COLORS, 'textColor', '#f0efe8');
   buildSwatches('bgSwatches',    BG_COLORS,   'bgColor',   '#000000');
-  loadSettingsUI();
-  if (!getSettings().dir) saveSettings();
+  if (!getGlobal().font) saveGlobal();
 }
 init();
 </script>

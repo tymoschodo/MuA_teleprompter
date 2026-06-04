@@ -7,141 +7,121 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body {
-    width: 100%; height: 100%;
-    background: #000;
-    overflow: hidden;
-    cursor: none;
-  }
-  #stage {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-  }
-  #textWrap {
-    position: absolute;
-    left: 0; top: 0;
-    width: 100%;
-    will-change: transform;
-    transform: translate(0, 100vh); /* starts off-screen, awaits cue */
-  }
-  #textContent {
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-  /* Tiny unobtrusive cue indicator — bottom-right, very dim */
+  html, body { width: 100%; height: 100%; background: #000; overflow: hidden; cursor: none; }
+  #stage { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+  #textWrap { position: absolute; left: 0; top: 0; width: 100%; will-change: transform; transform: translate(0, 100vh); }
+  #textContent { white-space: pre-wrap; word-break: break-word; }
   #cueTag {
-    position: fixed;
-    bottom: 1rem;
-    right: 1.5rem;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.7rem;
-    color: rgba(255,255,255,0.12);
-    pointer-events: none;
-    z-index: 10;
-    letter-spacing: 0.06em;
+    position: fixed; bottom: 1rem; right: 1.5rem;
+    font-family: 'Space Mono', monospace; font-size: 0.7rem;
+    color: rgba(255,255,255,0.12); pointer-events: none; z-index: 10; letter-spacing: 0.06em;
   }
-  /* F = fullscreen hint, fades after 3s */
   #hint {
-    position: fixed;
-    bottom: 1rem;
-    left: 50%;
-    transform: translateX(-50%);
-    font-family: 'Space Mono', monospace;
-    font-size: 0.65rem;
-    color: rgba(255,255,255,0.18);
-    pointer-events: none;
-    z-index: 10;
-    transition: opacity 1s;
+    position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%);
+    font-family: 'Space Mono', monospace; font-size: 0.65rem;
+    color: rgba(255,255,255,0.18); pointer-events: none; z-index: 10; transition: opacity 1s;
   }
 </style>
 </head>
 <body>
-
 <div id="stage">
-  <div id="textWrap">
-    <div id="textContent"></div>
-  </div>
+  <div id="textWrap"><div id="textContent"></div></div>
 </div>
 <div id="cueTag"></div>
 <div id="hint">F — Vollbild</div>
 
 <script>
 const STORE = 'tp_';
-let texts = [], settings = {}, animId = null;
-let startPos = {x:0, y:0}, endPos = {x:0, y:0};
+let texts = [], presets = [], global = {}, animId = null;
+let startPos = {x:0,y:0}, endPos = {x:0,y:0};
 let animStartTime = 0, animTotalDuration = 0;
 let paused = false, stopped = true;
 let pausedX = 0, pausedY = 0;
 
-// Fade out the hint after 3 seconds
 setTimeout(() => { document.getElementById('hint').style.opacity = '0'; }, 3000);
 
-function getS()  { return JSON.parse(localStorage.getItem(STORE+'settings') || '{}'); }
-function getT()  { return JSON.parse(localStorage.getItem(STORE+'texts')    || '[]'); }
+function getGlobal()  { return JSON.parse(localStorage.getItem(STORE+'global')  || '{}'); }
+function getPresets() { return JSON.parse(localStorage.getItem(STORE+'presets') || '[]'); }
+function getTexts()   { return JSON.parse(localStorage.getItem(STORE+'texts')   || '[]'); }
 
-function applySettings() {
-  settings = getS();
-  const c = document.getElementById('textContent');
-  document.body.style.background    = settings.bgColor   || '#000000';
-  document.getElementById('stage').style.background = settings.bgColor || '#000000';
-  c.style.fontFamily  = settings.font      || "'Syne', sans-serif";
-  c.style.fontSize    = (settings.size     || 72)  + 'px';
-  c.style.lineHeight  = settings.lineH     || 1.6;
-  c.style.color       = settings.textColor || '#f0efe8';
-  c.style.fontWeight  = settings.weight    || '700';
-  c.style.textAlign   = settings.align     || 'left';
-  c.style.padding     = `0 ${settings.pad !== undefined ? settings.pad : 80}px`;
-  c.style.transform   = settings.mirror    ? 'scaleX(-1)' : '';
+// Merge global visual + preset scroll settings for a given text index
+function resolveSettings(idx) {
+  const g = getGlobal();
+  const t = texts[idx];
+  const p = t && t.presetId ? presets.find(x => String(x.id) === String(t.presetId)) : null;
+  return {
+    // Visual from global
+    font:      g.font      || "'Syne', sans-serif",
+    size:      g.size      || 72,
+    weight:    g.weight    || '700',
+    align:     g.align     || 'left',
+    pad:       g.pad       !== undefined ? g.pad : 80,
+    mirror:    g.mirror    || false,
+    textColor: g.textColor || '#f0efe8',
+    bgColor:   g.bgColor   || '#000000',
+    // Scroll from preset (or global defaults if no preset)
+    dir:       p ? p.dir      : (g.dir      || 'up'),
+    speed:     p ? p.speed    : (g.speed    || 60),
+    lineH:     p ? p.lineH    : (g.lineH    || 1.6),
+    keepText:  p ? p.keepText : (g.keepText || false),
+  };
 }
 
-function computeTrajectory(dir) {
+function applyVisual(s) {
+  const c = document.getElementById('textContent');
+  document.body.style.background                        = s.bgColor;
+  document.getElementById('stage').style.background    = s.bgColor;
+  c.style.fontFamily  = s.font;
+  c.style.fontSize    = s.size + 'px';
+  c.style.lineHeight  = s.lineH;
+  c.style.color       = s.textColor;
+  c.style.fontWeight  = s.weight;
+  c.style.textAlign   = s.align;
+  c.style.padding     = `0 ${s.pad}px`;
+  c.style.transform   = s.mirror ? 'scaleX(-1)' : '';
+}
+
+function computeTrajectory(s) {
   const W = window.innerWidth, H = window.innerHeight;
   const wrap = document.getElementById('textWrap');
   const tw = wrap.offsetWidth, th = wrap.offsetHeight;
-  const keep = settings.keepText;
-
+  const keep = s.keepText;
   const map = {
-    'up':      [ {x: (W-tw)/2, y: H},          {x: (W-tw)/2, y: keep ? 0 : -th}          ],
-    'down':    [ {x: (W-tw)/2, y: -th},         {x: (W-tw)/2, y: keep ? H-th : H}         ],
-    'left':    [ {x: W,        y: (H-th)/2},    {x: keep ? 0 : -tw, y: (H-th)/2}          ],
-    'right':   [ {x: -tw,      y: (H-th)/2},    {x: keep ? W-tw : W, y: (H-th)/2}         ],
-    'diag-ul': [ {x: W,        y: H},            {x: keep ? 0 : -tw, y: keep ? 0 : -th}   ],
-    'diag-ur': [ {x: -tw,      y: H},            {x: keep ? W-tw : W, y: keep ? 0 : -th}  ],
-    'diag-dl': [ {x: W,        y: -th},          {x: keep ? 0 : -tw, y: keep ? H-th : H}  ],
-    'diag-dr': [ {x: -tw,      y: -th},          {x: keep ? W-tw : W, y: keep ? H-th : H} ],
+    'up':      [ {x:(W-tw)/2, y:H},   {x:(W-tw)/2, y: keep?0:-th}          ],
+    'down':    [ {x:(W-tw)/2, y:-th},  {x:(W-tw)/2, y: keep?H-th:H}         ],
+    'left':    [ {x:W, y:(H-th)/2},    {x: keep?0:-tw, y:(H-th)/2}          ],
+    'right':   [ {x:-tw, y:(H-th)/2},  {x: keep?W-tw:W, y:(H-th)/2}         ],
+    'diag-ul': [ {x:W, y:H},           {x: keep?0:-tw, y:keep?0:-th}        ],
+    'diag-ur': [ {x:-tw, y:H},         {x: keep?W-tw:W, y:keep?0:-th}       ],
+    'diag-dl': [ {x:W, y:-th},         {x: keep?0:-tw, y:keep?H-th:H}       ],
+    'diag-dr': [ {x:-tw, y:-th},       {x: keep?W-tw:W, y:keep?H-th:H}      ],
   };
-  const pair = map[dir] || map['up'];
+  const pair = map[s.dir] || map['up'];
   return { start: pair[0], end: pair[1] };
 }
 
 function startText(idx) {
   if (animId) cancelAnimationFrame(animId);
   paused = false; stopped = false;
-  applySettings();
 
-  const t = texts[idx];
-  if (!t) return;
+  const s = resolveSettings(idx);
+  const wrap = document.getElementById('textWrap');
+  const c    = document.getElementById('textContent');
 
-  const c = document.getElementById('textContent');
-  c.textContent = t.content || '';
+  applyVisual(s);
+  c.style.lineHeight = s.lineH; // ensure lineH from preset applied
+  c.textContent = texts[idx] ? (texts[idx].content || '') : '';
   document.getElementById('cueTag').textContent = `${idx+1} / ${texts.length}`;
 
-  const wrap = document.getElementById('textWrap');
   wrap.style.transform = 'translate(0px, 0px)';
   wrap.style.width = window.innerWidth + 'px';
 
-  // Let the DOM paint the text so we get correct offsetHeight
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      const dir = settings.dir || 'up';
-      const speed = settings.speed || 60;
-      const pos = computeTrajectory(dir);
-      startPos = pos.start; endPos = pos.end;
+      const traj = computeTrajectory(s);
+      startPos = traj.start; endPos = traj.end;
       const dx = endPos.x - startPos.x, dy = endPos.y - startPos.y;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-      animTotalDuration = (dist / speed) * 1000;
+      animTotalDuration = (Math.sqrt(dx*dx + dy*dy) / s.speed) * 1000;
       animStartTime = performance.now();
       animate();
     });
@@ -150,33 +130,26 @@ function startText(idx) {
 
 function animate() {
   if (paused || stopped) return;
-  const elapsed = performance.now() - animStartTime;
-  const t = Math.min(elapsed / animTotalDuration, 1);
+  const t = Math.min((performance.now() - animStartTime) / animTotalDuration, 1);
   const x = startPos.x + (endPos.x - startPos.x) * t;
   const y = startPos.y + (endPos.y - startPos.y) * t;
   document.getElementById('textWrap').style.transform = `translate(${x}px, ${y}px)`;
-  if (t < 1) {
-    animId = requestAnimationFrame(animate);
-  } else {
-    stopped = true;
-  }
+  if (t < 1) animId = requestAnimationFrame(animate);
+  else stopped = true;
 }
 
 function doPause() {
   if (stopped) return;
   if (!paused) {
     cancelAnimationFrame(animId);
-    // Record current position so resume picks up exactly here
-    const wrap = document.getElementById('textWrap');
-    const m = wrap.style.transform.match(/translate\(([^,]+)px,\s*([^)]+)px\)/);
+    const m = document.getElementById('textWrap').style.transform.match(/translate\(([^,]+)px,\s*([^)]+)px\)/);
     if (m) { pausedX = parseFloat(m[1]); pausedY = parseFloat(m[2]); }
     paused = true;
   } else {
-    // Resume: recalculate remaining distance from current pos
     const dx = endPos.x - pausedX, dy = endPos.y - pausedY;
-    const dist = Math.sqrt(dx*dx + dy*dy);
-    const speed = settings.speed || 60;
-    animTotalDuration = (dist / speed) * 1000;
+    const curIdx = texts.findIndex(t => t.status === 'active');
+    const s = resolveSettings(curIdx >= 0 ? curIdx : 0);
+    animTotalDuration = (Math.sqrt(dx*dx + dy*dy) / s.speed) * 1000;
     startPos = { x: pausedX, y: pausedY };
     animStartTime = performance.now();
     paused = false;
@@ -187,7 +160,6 @@ function doPause() {
 function doStop() {
   if (animId) cancelAnimationFrame(animId);
   stopped = true; paused = false;
-  // Fade out text content smoothly
   const wrap = document.getElementById('textWrap');
   wrap.style.transition = 'opacity 0.6s';
   wrap.style.opacity = '0';
@@ -200,27 +172,21 @@ function doStop() {
   }, 650);
 }
 
-// Storage listener — receives commands from conductor and settings
 window.addEventListener('storage', e => {
-  if (e.key === STORE+'texts') {
-    texts = JSON.parse(e.newValue || '[]');
-  }
-  if (e.key === STORE+'settings') {
-    applySettings();
-  }
+  if (e.key === STORE+'texts')   { texts   = JSON.parse(e.newValue || '[]'); }
+  if (e.key === STORE+'presets') { presets = JSON.parse(e.newValue || '[]'); }
+  if (e.key === STORE+'global')  { /* visual updates applied on next cue */ }
   if (e.key === STORE+'msg') {
     try {
       const msg = JSON.parse(e.newValue || '{}');
-      if (msg.type === 'cue')      { texts = getT(); startText(msg.idx); }
-      if (msg.type === 'pause')    { doPause(); }
-      if (msg.type === 'resume')   { if (paused) doPause(); }
-      if (msg.type === 'stop')     { doStop(); }
-      if (msg.type === 'settings') { settings = msg.data; applySettings(); }
+      if (msg.type === 'cue')     { texts = getTexts(); presets = getPresets(); startText(msg.idx); }
+      if (msg.type === 'pause')   { doPause(); }
+      if (msg.type === 'resume')  { if (paused) doPause(); }
+      if (msg.type === 'stop')    { doStop(); }
     } catch(err) {}
   }
 });
 
-// F = fullscreen
 document.addEventListener('keydown', e => {
   if (e.key === 'f' || e.key === 'F') {
     if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
@@ -228,9 +194,9 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// Init
-texts = getT();
-applySettings();
+texts = getTexts(); presets = getPresets();
+const g = getGlobal();
+document.body.style.background = g.bgColor || '#000';
 </script>
 </body>
 </html>
