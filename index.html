@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teleprompter — Einstellungen</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0f;
+    --surface: #1a1a1d;
+    --surface2: #242428;
+    --border: #2e2e33;
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --text: #f0efe8;
+    --muted: #888780;
+    --danger: #ff4444;
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+    --radius: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-display);
+    min-height: 100vh;
+    padding: 2rem;
+  }
+  h1 { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.03em; color: var(--accent); margin-bottom: 0.25rem; }
+  h2 { font-size: 1rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
+  h3 { font-size: 0.85rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.6rem; }
+
+  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; max-width: 1100px; margin: 0 auto; }
+  .layout-header { grid-column: 1/-1; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
+  .card-full { grid-column: 1/-1; }
+
+  .launch-bar { display: flex; gap: 0.75rem; }
+  .btn { font-family: var(--font-display); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.04em; padding: 0.6rem 1.2rem; border-radius: var(--radius); border: 1.5px solid var(--border); background: var(--surface2); color: var(--text); cursor: pointer; transition: all 0.15s; }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-accent { background: var(--accent); color: #0e0e0f; border-color: var(--accent); }
+  .btn-accent:hover { background: #fff; border-color: #fff; color: #0e0e0f; }
+  .btn-danger { border-color: var(--danger); color: var(--danger); }
+  .btn-danger:hover { background: var(--danger); color: #fff; }
+  .btn-sm { font-size: 0.75rem; padding: 0.35rem 0.8rem; }
+
+  label { font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 0.4rem; margin-top: 0.9rem; }
+  label:first-child { margin-top: 0; }
+  input[type=text], input[type=number], select, textarea {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text); font-family: var(--font-mono);
+    font-size: 0.85rem; padding: 0.55rem 0.75rem; transition: border 0.15s;
+  }
+  input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
+    outline: none; border-color: var(--accent);
+  }
+  textarea { resize: vertical; min-height: 90px; }
+  select option { background: #1a1a1d; }
+
+  input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+  .range-row { display: flex; align-items: center; gap: 0.75rem; }
+  .range-val { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); min-width: 3rem; text-align: right; }
+
+  .text-list { display: flex; flex-direction: column; gap: 0.5rem; max-height: 340px; overflow-y: auto; padding-right: 4px; }
+  .text-list::-webkit-scrollbar { width: 4px; }
+  .text-list::-webkit-scrollbar-track { background: transparent; }
+  .text-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .text-item {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 0.65rem 0.9rem; cursor: pointer; transition: border-color 0.15s;
+    display: flex; align-items: center; gap: 0.75rem;
+  }
+  .text-item:hover { border-color: var(--muted); }
+  .text-item.active { border-color: var(--accent); }
+  .text-num { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); min-width: 1.5rem; }
+  .text-title { font-size: 0.85rem; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .text-status { font-size: 0.7rem; font-family: var(--font-mono); }
+  .text-status.done { color: var(--accent); }
+  .text-status.active { color: var(--accent2); }
+
+  .edit-panel { display: flex; flex-direction: column; gap: 0; }
+  .inline-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+  .color-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.4rem; }
+  .color-swatch { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border 0.15s; }
+  .color-swatch.active { border-color: var(--accent); }
+
+  .info-strip { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+  .info-strip span { color: var(--accent); }
+
+  .toggle-row { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.9rem; }
+  .toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle-slider { position: absolute; inset: 0; background: var(--surface2); border: 1px solid var(--border); border-radius: 11px; cursor: pointer; transition: 0.2s; }
+  .toggle-slider::after { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: var(--muted); border-radius: 50%; transition: 0.2s; }
+  .toggle input:checked + .toggle-slider { background: var(--accent); border-color: var(--accent); }
+  .toggle input:checked + .toggle-slider::after { transform: translateX(18px); background: #0e0e0f; }
+  .toggle-label { font-size: 0.8rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <div class="layout-header">
+    <div>
+      <h1>TELEPROMPTER</h1>
+      <p style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;font-family:var(--font-mono)">Einstellungen — v1.0</p>
+    </div>
+    <div class="launch-bar">
+      <button class="btn" onclick="openConductor()">⊞ Dirigent öffnen</button>
+      <button class="btn btn-accent" onclick="openProjection()">▶ Projektion öffnen</button>
+    </div>
+  </div>
+
+  <!-- Text list -->
+  <div class="card" style="grid-row: span 2;">
+    <h2>Texte (20)</h2>
+    <div class="text-list" id="textList"></div>
+    <div style="display:flex;gap:0.5rem;margin-top:0.75rem;">
+      <button class="btn btn-sm" onclick="addText()">+ Hinzufügen</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteText()">Löschen</button>
+      <button class="btn btn-sm" onclick="moveUp()">↑</button>
+      <button class="btn btn-sm" onclick="moveDown()">↓</button>
+    </div>
+  </div>
+
+  <!-- Text editor -->
+  <div class="card edit-panel">
+    <h2>Text bearbeiten</h2>
+    <label>Titel</label>
+    <input type="text" id="editTitle" placeholder="z.B. Arie I — Liebe" oninput="saveEdit()">
+    <label>Inhalt</label>
+    <textarea id="editContent" placeholder="Text hier eingeben…" oninput="saveEdit()"></textarea>
+    <div class="info-strip" id="editInfo">Kein Text ausgewählt</div>
+  </div>
+
+  <!-- Scrolling settings -->
+  <div class="card">
+    <h2>Scroll-Einstellungen</h2>
+
+    <label>Richtung</label>
+    <select id="settDir" onchange="saveSettings()">
+      <option value="up">↑ Unten nach oben (klassisch)</option>
+      <option value="down">↓ Oben nach unten</option>
+      <option value="left">← Rechts nach links</option>
+      <option value="right">→ Links nach rechts</option>
+      <option value="diag-ul">↖ Diagonal oben-links</option>
+      <option value="diag-ur">↗ Diagonal oben-rechts</option>
+      <option value="diag-dl">↙ Diagonal unten-links</option>
+      <option value="diag-dr">↘ Diagonal unten-rechts</option>
+    </select>
+
+    <label>Scrollgeschwindigkeit</label>
+    <div class="range-row">
+      <input type="range" id="settSpeed" min="10" max="300" step="5" value="60" oninput="saveSettings();document.getElementById('speedVal').textContent=this.value+' px/s'">
+      <span class="range-val" id="speedVal">60 px/s</span>
+    </div>
+
+    <label>Schriftgröße (Projektion)</label>
+    <div class="range-row">
+      <input type="range" id="settSize" min="24" max="160" step="2" value="72" oninput="saveSettings();document.getElementById('sizeVal').textContent=this.value+'px'">
+      <span class="range-val" id="sizeVal">72px</span>
+    </div>
+
+    <label>Zeilenabstand</label>
+    <div class="range-row">
+      <input type="range" id="settLineH" min="10" max="30" step="1" value="16" oninput="saveSettings();document.getElementById('lineHVal').textContent=(this.value/10).toFixed(1)">
+      <span class="range-val" id="lineHVal">1.6</span>
+    </div>
+
+    <div class="toggle-row">
+      <label class="toggle"><input type="checkbox" id="settKeepText" onchange="saveSettings()"><span class="toggle-slider"></span></label>
+      <span class="toggle-label">Vergangener Text bleibt sichtbar</span>
+    </div>
+
+    <div class="toggle-row">
+      <label class="toggle"><input type="checkbox" id="settMirror" onchange="saveSettings()"><span class="toggle-slider"></span></label>
+      <span class="toggle-label">Text horizontal spiegeln</span>
+    </div>
+  </div>
+
+  <!-- Visual settings -->
+  <div class="card">
+    <h2>Erscheinungsbild</h2>
+
+    <label>Schriftart</label>
+    <select id="settFont" onchange="saveSettings()">
+      <option value="'Syne', sans-serif">Syne (Standard)</option>
+      <option value="'Space Mono', monospace">Space Mono</option>
+      <option value="Georgia, serif">Georgia</option>
+      <option value="'Times New Roman', serif">Times New Roman</option>
+      <option value="Impact, sans-serif">Impact</option>
+      <option value="'Arial', sans-serif">Arial</option>
+      <option value="'Helvetica Neue', sans-serif">Helvetica Neue</option>
+    </select>
+
+    <label>Textfarbe</label>
+    <div class="color-row" id="colorSwatches"></div>
+
+    <label>Hintergrundfarbe</label>
+    <div class="color-row" id="bgSwatches"></div>
+
+    <label>Textausrichtung</label>
+    <select id="settAlign" onchange="saveSettings()">
+      <option value="left">Linksbündig</option>
+      <option value="center">Zentriert</option>
+      <option value="right">Rechtsbündig</option>
+    </select>
+
+    <label>Ränder (px)</label>
+    <div class="range-row">
+      <input type="range" id="settPad" min="0" max="300" step="10" value="80" oninput="saveSettings();document.getElementById('padVal').textContent=this.value+'px'">
+      <span class="range-val" id="padVal">80px</span>
+    </div>
+
+    <label>Textgewicht</label>
+    <select id="settWeight" onchange="saveSettings()">
+      <option value="400">Normal</option>
+      <option value="600">Halbfett</option>
+      <option value="700" selected>Fett</option>
+      <option value="800">Sehr fett</option>
+    </select>
+  </div>
+
+  <!-- Export/Import -->
+  <div class="card card-full" style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;">
+    <h3 style="margin:0;">Daten:</h3>
+    <button class="btn btn-sm" onclick="exportData()">↓ Exportieren (JSON)</button>
+    <button class="btn btn-sm" onclick="document.getElementById('importFile').click()">↑ Importieren (JSON)</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="btn btn-sm btn-danger" onclick="if(confirm('Alle Texte zurücksetzen?'))initDefaultTexts()">⚠ Zurücksetzen</button>
+    <span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--muted);margin-left:auto">Pedal / Leertaste = nächster Text starten</span>
+  </div>
+</div>
+
+<script>
+const STORE = 'tp_';
+const textColors = ['#f0efe8','#ffffff','#e8ff47','#ff6b35','#00ffcc','#ffaacc','#aaddff'];
+const bgColors   = ['#000000','#0e0e0f','#1a1a1d','#0a0a20','#0d1a0d','#200a0a','#1a1500'];
+
+let texts = [], selectedIdx = 0;
+
+function getSettings() {
+  return JSON.parse(localStorage.getItem(STORE+'settings') || '{}');
+}
+function saveSettings() {
+  const s = {
+    dir: document.getElementById('settDir').value,
+    speed: +document.getElementById('settSpeed').value,
+    size: +document.getElementById('settSize').value,
+    lineH: document.getElementById('settLineH').value / 10,
+    keepText: document.getElementById('settKeepText').checked,
+    mirror: document.getElementById('settMirror').checked,
+    font: document.getElementById('settFont').value,
+    align: document.getElementById('settAlign').value,
+    pad: +document.getElementById('settPad').value,
+    weight: document.getElementById('settWeight').value,
+    textColor: getActiveColor('colorSwatches') || '#f0efe8',
+    bgColor: getActiveColor('bgSwatches') || '#000000',
+  };
+  localStorage.setItem(STORE+'settings', JSON.stringify(s));
+  broadcast({type:'settings', data: s});
+}
+function getActiveColor(swatchId) {
+  const active = document.querySelector('#'+swatchId+' .color-swatch.active');
+  return active ? active.dataset.color : null;
+}
+function loadSettingsUI() {
+  const s = getSettings();
+  if (s.dir) document.getElementById('settDir').value = s.dir;
+  if (s.speed) { document.getElementById('settSpeed').value = s.speed; document.getElementById('speedVal').textContent = s.speed+' px/s'; }
+  if (s.size) { document.getElementById('settSize').value = s.size; document.getElementById('sizeVal').textContent = s.size+'px'; }
+  if (s.lineH) { document.getElementById('settLineH').value = s.lineH*10; document.getElementById('lineHVal').textContent = parseFloat(s.lineH).toFixed(1); }
+  if (s.keepText !== undefined) document.getElementById('settKeepText').checked = s.keepText;
+  if (s.mirror !== undefined) document.getElementById('settMirror').checked = s.mirror;
+  if (s.font) document.getElementById('settFont').value = s.font;
+  if (s.align) document.getElementById('settAlign').value = s.align;
+  if (s.pad !== undefined) { document.getElementById('settPad').value = s.pad; document.getElementById('padVal').textContent = s.pad+'px'; }
+  if (s.weight) document.getElementById('settWeight').value = s.weight;
+}
+
+function buildSwatches(containerId, colors, settingKey, defaultVal) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  const s = getSettings();
+  const current = s[settingKey] || defaultVal;
+  colors.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'color-swatch' + (c === current ? ' active' : '');
+    div.style.background = c;
+    div.style.border = c === '#000000' ? '1px solid #333' : '';
+    div.dataset.color = c;
+    div.onclick = () => { container.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active')); div.classList.add('active'); saveSettings(); };
+    container.appendChild(div);
+  });
+}
+
+function saveTexts() {
+  localStorage.setItem(STORE+'texts', JSON.stringify(texts));
+  broadcast({type:'texts', data: texts});
+}
+function loadTexts() {
+  const stored = localStorage.getItem(STORE+'texts');
+  if (stored) texts = JSON.parse(stored);
+  else initDefaultTexts(false);
+  renderTextList();
+  selectText(0);
+}
+function initDefaultTexts(save=true) {
+  texts = Array.from({length:20},(_,i) => ({
+    id: Date.now()+i,
+    title: `Text ${i+1}`,
+    content: `Hier kommt der ${i===0?'erste':i===1?'zweite':i===2?'dritte':(i+1)+'.'} Text für den Schauspieler.\n\nDieser Text wird vom Dirigenten mit dem Fußpedal gestartet.\n\nPlatzhalterinhalt — bitte ersetzen.`,
+    status: 'waiting'
+  }));
+  if (save) { saveTexts(); renderTextList(); selectText(0); }
+  else { renderTextList(); selectText(0); }
+}
+function renderTextList() {
+  const list = document.getElementById('textList');
+  list.innerHTML = '';
+  texts.forEach((t,i) => {
+    const div = document.createElement('div');
+    div.className = 'text-item' + (i===selectedIdx?' active':'');
+    div.innerHTML = `<span class="text-num">${String(i+1).padStart(2,'0')}</span><span class="text-title">${t.title||'(kein Titel)'}</span><span class="text-status ${t.status||'waiting'}">${t.status==='done'?'✓':t.status==='active'?'►':''}</span>`;
+    div.onclick = () => selectText(i);
+    list.appendChild(div);
+  });
+}
+function selectText(i) {
+  if (i < 0 || i >= texts.length) return;
+  selectedIdx = i;
+  renderTextList();
+  const t = texts[i];
+  document.getElementById('editTitle').value = t.title || '';
+  document.getElementById('editContent').value = t.content || '';
+  const words = (t.content||'').split(/\s+/).filter(Boolean).length;
+  document.getElementById('editInfo').innerHTML = `Text <span>${i+1} / ${texts.length}</span> &nbsp;·&nbsp; <span>${words}</span> Wörter`;
+}
+function saveEdit() {
+  if (selectedIdx < 0 || selectedIdx >= texts.length) return;
+  texts[selectedIdx].title = document.getElementById('editTitle').value;
+  texts[selectedIdx].content = document.getElementById('editContent').value;
+  saveTexts(); renderTextList();
+  const words = texts[selectedIdx].content.split(/\s+/).filter(Boolean).length;
+  document.getElementById('editInfo').innerHTML = `Text <span>${selectedIdx+1} / ${texts.length}</span> &nbsp;·&nbsp; <span>${words}</span> Wörter`;
+}
+function addText() {
+  texts.push({id: Date.now(), title: `Text ${texts.length+1}`, content: '', status: 'waiting'});
+  saveTexts(); renderTextList(); selectText(texts.length-1);
+}
+function deleteText() {
+  if (texts.length <= 1) return;
+  if (!confirm(`Text "${texts[selectedIdx].title}" wirklich löschen?`)) return;
+  texts.splice(selectedIdx, 1);
+  selectedIdx = Math.min(selectedIdx, texts.length-1);
+  saveTexts(); renderTextList(); selectText(selectedIdx);
+}
+function moveUp() {
+  if (selectedIdx <= 0) return;
+  [texts[selectedIdx-1], texts[selectedIdx]] = [texts[selectedIdx], texts[selectedIdx-1]];
+  selectedIdx--; saveTexts(); renderTextList(); selectText(selectedIdx);
+}
+function moveDown() {
+  if (selectedIdx >= texts.length-1) return;
+  [texts[selectedIdx], texts[selectedIdx+1]] = [texts[selectedIdx+1], texts[selectedIdx]];
+  selectedIdx++; saveTexts(); renderTextList(); selectText(selectedIdx);
+}
+
+function broadcast(msg) { localStorage.setItem(STORE+'msg', JSON.stringify({...msg, ts: Date.now()})); }
+
+function openConductor() {
+  window.open('', 'tp_conductor', 'width=700,height=900,toolbar=no,menubar=no');
+  const w = window.open('', 'tp_conductor');
+  w.document.open();
+  w.document.write(conductorHTML());
+  w.document.close();
+}
+function openProjection() {
+  const w = window.open('', 'tp_projection', 'width=1280,height=720,toolbar=no,menubar=no');
+  w.document.open();
+  w.document.write(projectionHTML());
+  w.document.close();
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify({texts, settings: getSettings()}, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'teleprompter-daten.json'; a.click();
+}
+function importData(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const d = JSON.parse(ev.target.result);
+      if (d.texts) { texts = d.texts; saveTexts(); renderTextList(); selectText(0); }
+      if (d.settings) { localStorage.setItem(STORE+'settings', JSON.stringify(d.settings)); loadSettingsUI(); buildSwatches('colorSwatches', textColors, 'textColor', '#f0efe8'); buildSwatches('bgSwatches', bgColors, 'bgColor', '#000000'); }
+    } catch(err) { alert('Fehler beim Importieren: '+err.message); }
+  };
+  r.readAsText(f);
+}
+
+// ─── CONDUCTOR WINDOW HTML ──────────────────────────────────────────────────
+function conductorHTML() { return `<!DOCTYPE html>
+<html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dirigent</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0b;--surface:#141417;--surface2:#1e1e22;--border:#2a2a30;--accent:#e8ff47;--accent2:#ff6b35;--text:#f0efe8;--muted:#777;--danger:#ff4444;--green:#44dd88}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden;user-select:none}
+.topbar{display:flex;align-items:center;gap:1rem;padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);flex-shrink:0}
+.topbar h1{font-size:1rem;font-weight:800;letter-spacing:0.05em;color:var(--accent)}
+.status-pill{font-family:'Space Mono',monospace;font-size:0.7rem;padding:0.25rem 0.7rem;border-radius:3px;border:1px solid var(--border)}
+.status-pill.idle{color:var(--muted);border-color:var(--border)}
+.status-pill.running{color:var(--accent2);border-color:var(--accent2);animation:pulse 1.2s ease infinite}
+.status-pill.paused{color:var(--accent);border-color:var(--accent)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.controls{display:flex;gap:0.5rem;margin-left:auto}
+.btn{font-family:'Syne',sans-serif;font-size:0.8rem;font-weight:700;padding:0.5rem 1rem;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;transition:all 0.15s}
+.btn:hover{border-color:var(--muted)}
+.btn-cue{background:var(--accent);color:#0a0a0b;border-color:var(--accent);font-size:0.9rem;padding:0.5rem 1.5rem}
+.btn-cue:hover{background:#fff;border-color:#fff}
+.btn-cue:disabled{opacity:0.3;cursor:default}
+.btn-pause{border-color:var(--accent2);color:var(--accent2)}
+.btn-pause:hover{background:var(--accent2);color:#0a0a0b}
+.btn-stop{border-color:var(--danger);color:var(--danger)}
+.btn-stop:hover{background:var(--danger);color:#fff}
+.current-panel{padding:1.25rem;border-bottom:1px solid var(--border);flex-shrink:0}
+.current-label{font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem}
+.current-title{font-size:1.3rem;font-weight:800;margin-bottom:0.75rem;min-height:1.8rem}
+.progress-bar{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;margin-bottom:0.4rem}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:4px;transition:width 0.3s ease;width:0%}
+.progress-meta{display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--muted)}
+.progress-pct{font-size:1.2rem;font-weight:800;color:var(--accent);font-family:'Space Mono',monospace;margin-top:0.4rem}
+.scroll-list{flex:1;overflow-y:auto;padding:0.75rem}
+.scroll-list::-webkit-scrollbar{width:3px}.scroll-list::-webkit-scrollbar-thumb{background:var(--border)}
+.t-item{padding:0.65rem 0.9rem;border-radius:4px;border:1px solid transparent;margin-bottom:0.4rem;display:flex;align-items:center;gap:0.75rem;transition:all 0.2s;cursor:default}
+.t-item.waiting{opacity:0.45}
+.t-item.active{border-color:var(--accent2);background:rgba(255,107,53,0.08)}
+.t-item.done{border-color:rgba(68,221,136,0.3);background:rgba(68,221,136,0.05)}
+.t-num{font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--muted);min-width:1.5rem}
+.t-title{font-size:0.85rem;font-weight:600;flex:1}
+.t-icon{font-size:0.85rem;min-width:1rem;text-align:center}
+.cue-hint{text-align:center;padding:0.6rem;font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--muted);border-top:1px solid var(--border);flex-shrink:0}
+</style></head>
+<body>
+<div class="topbar">
+  <h1>DIRIGENT</h1>
+  <span class="status-pill idle" id="statusPill">BEREIT</span>
+  <div class="controls">
+    <button class="btn btn-pause" id="btnPause" onclick="doPause()" disabled>⏸ Pause</button>
+    <button class="btn btn-stop" id="btnStop" onclick="doStop()" disabled>⏹ Stop</button>
+    <button class="btn btn-cue" id="btnCue" onclick="doCue()">▶ CUE</button>
+  </div>
+</div>
+<div class="current-panel">
+  <div class="current-label">Aktueller Text</div>
+  <div class="current-title" id="currentTitle">—</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-meta"><span id="progTime">0:00</span><span id="progWords">0 / 0 Wörter</span></div>
+  <div class="progress-pct" id="progressPct">0%</div>
+</div>
+<div class="scroll-list" id="textListC"></div>
+<div class="cue-hint">Leertaste oder Fußpedal → nächsten Text starten</div>
+
+<script>
+const STORE='tp_';
+let texts=[], currentIdx=-1, state='idle', pct=0, progressInterval=null, startTime=0, totalWords=0;
+
+function getSettings(){return JSON.parse(localStorage.getItem(STORE+'settings')||'{}')}
+function broadcast(msg){localStorage.setItem(STORE+'msg',JSON.stringify({...msg,ts:Date.now()}))}
+
+function loadTexts(){
+  const s=localStorage.getItem(STORE+'texts');
+  if(s)texts=JSON.parse(s);
+  renderList();
+}
+function renderList(){
+  const el=document.getElementById('textListC'); el.innerHTML='';
+  texts.forEach((t,i)=>{
+    const d=document.createElement('div');
+    const cls=i===currentIdx?'active':t.status==='done'?'done':'waiting';
+    d.className='t-item '+cls;
+    const icon=i===currentIdx?(state==='running'?'►':state==='paused'?'⏸':'·'):t.status==='done'?'✓':'·';
+    d.innerHTML=\`<span class="t-num">\${String(i+1).padStart(2,'0')}</span><span class="t-title">\${t.title||'(kein Titel)'}</span><span class="t-icon">\${icon}</span>\`;
+    el.appendChild(d);
+  });
+  if(currentIdx>=0){const items=el.querySelectorAll('.t-item');if(items[currentIdx])items[currentIdx].scrollIntoView({block:'nearest',behavior:'smooth'});}
+}
+function setStatus(s){
+  state=s;
+  const pill=document.getElementById('statusPill');
+  if(s==='running'){pill.textContent='LÄUFT';pill.className='status-pill running';}
+  else if(s==='paused'){pill.textContent='PAUSE';pill.className='status-pill paused';}
+  else{pill.textContent='BEREIT';pill.className='status-pill idle';}
+  document.getElementById('btnPause').disabled=s==='idle';
+  document.getElementById('btnStop').disabled=s==='idle';
+  document.getElementById('btnCue').disabled=s==='running';
+}
+function doCue(){
+  if(state==='running')return;
+  const nextIdx=currentIdx+1;
+  if(nextIdx>=texts.length){alert('Alle Texte wurden gezeigt!');return;}
+  if(currentIdx>=0&&texts[currentIdx])texts[currentIdx].status='done';
+  currentIdx=nextIdx;
+  texts[currentIdx].status='active';
+  const t=texts[currentIdx];
+  document.getElementById('currentTitle').textContent=t.title||'(kein Titel)';
+  totalWords=(t.content||'').split(/\\s+/).filter(Boolean).length;
+  pct=0; updateProgress(0);
+  setStatus('running');
+  broadcast({type:'cue',idx:currentIdx});
+  startProgress();
+  renderList();
+}
+function doPause(){
+  if(state==='running'){clearInterval(progressInterval);setStatus('paused');broadcast({type:'pause'});}
+  else if(state==='paused'){startProgress();setStatus('running');broadcast({type:'resume'});}
+  renderList();
+}
+function doStop(){
+  clearInterval(progressInterval);
+  if(currentIdx>=0&&texts[currentIdx])texts[currentIdx].status='waiting';
+  setStatus('idle'); pct=0; updateProgress(0);
+  broadcast({type:'stop'});
+  renderList();
+}
+function startProgress(){
+  clearInterval(progressInterval);
+  const settings=getSettings();
+  const speed=settings.speed||60;
+  const size=settings.size||72;
+  const lineH=settings.lineH||1.6;
+  const t=texts[currentIdx]; if(!t)return;
+  const words=t.content||'';
+  const lines=words.split('\\n');
+  const charsPerLine=30;
+  const estLines=words.split('\\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length/charsPerLine)),0);
+  const totalPx=estLines*(size*lineH);
+  const totalMs=(totalPx/speed)*1000;
+  startTime=Date.now();
+  progressInterval=setInterval(()=>{
+    const elapsed=Date.now()-startTime;
+    pct=Math.min(100,Math.round((elapsed/totalMs)*100));
+    updateProgress(pct);
+    if(pct>=100){clearInterval(progressInterval);setStatus('idle');if(texts[currentIdx])texts[currentIdx].status='done';renderList();}
+  },200);
+}
+function updateProgress(p){
+  document.getElementById('progressFill').style.width=p+'%';
+  document.getElementById('progressPct').textContent=p+'%';
+  const elapsed=startTime?((Date.now()-startTime)/1000):0;
+  const m=Math.floor(elapsed/60),s=Math.floor(elapsed%60);
+  document.getElementById('progTime').textContent=m+':'+(s<10?'0':'')+s;
+  document.getElementById('progWords').textContent=Math.round(p/100*totalWords)+' / '+totalWords+' Wörter';
+}
+window.addEventListener('storage',e=>{
+  if(e.key===STORE+'texts'){texts=JSON.parse(e.newValue||'[]');renderList();}
+  if(e.key===STORE+'msg'){
+    try{const msg=JSON.parse(e.newValue||'{}');
+      if(msg.type==='cue'&&msg.source==='projection'){}}catch(err){}
+  }
+});
+document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();if(state!=='running')doCue();}});
+loadTexts();
+<\/script></body></html>`; }
+
+// ─── PROJECTION WINDOW HTML ──────────────────────────────────────────────────
+function projectionHTML() { return `<!DOCTYPE html>
+<html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projektion</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;overflow:hidden;width:100vw;height:100vh;cursor:none;display:flex;align-items:center;justify-content:center}
+#stage{position:relative;width:100%;height:100%;overflow:hidden}
+#textWrap{position:absolute;will-change:transform}
+#textContent{white-space:pre-wrap;word-break:break-word}
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,0.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;z-index:10;font-family:'Syne',sans-serif;color:#f0efe8}
+#overlay h2{font-size:1.2rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;opacity:0.4}
+#overlay p{font-size:0.75rem;font-family:'Space Mono',monospace;opacity:0.25}
+#cueNum{position:fixed;top:1rem;right:1.5rem;font-family:'Space Mono',monospace;font-size:0.75rem;opacity:0.25;z-index:5;pointer-events:none;color:#fff}
+</style></head>
+<body>
+<div id="overlay"><h2>BEREIT</h2><p>Warten auf Cue vom Dirigenten…</p></div>
+<div id="stage"><div id="textWrap"><div id="textContent"></div></div></div>
+<div id="cueNum" id="cueNum"></div>
+<script>
+const STORE='tp_';
+let texts=[], currentIdx=-1, settings={}, animId=null, pos={x:0,y:0}, paused=false, stopped=true;
+let startPos={x:0,y:0}, endPos={x:0,y:0}, startTime=0, totalDuration=0;
+
+function getS(){return JSON.parse(localStorage.getItem(STORE+'settings')||'{}')}
+function getT(){return JSON.parse(localStorage.getItem(STORE+'texts')||'[]')}
+
+function applySettings(){
+  settings=getS();
+  const c=document.getElementById('textContent');
+  const bg=settings.bgColor||'#000000';
+  document.body.style.background=bg;
+  c.style.fontFamily=settings.font||"'Syne',sans-serif";
+  c.style.fontSize=(settings.size||72)+'px';
+  c.style.lineHeight=settings.lineH||1.6;
+  c.style.color=settings.textColor||'#f0efe8';
+  c.style.fontWeight=settings.weight||'700';
+  c.style.textAlign=settings.align||'left';
+  c.style.padding='0 '+(settings.pad||80)+'px';
+  c.style.transform=settings.mirror?'scaleX(-1)':'';
+}
+
+function computePositions(dir, textEl){
+  const W=window.innerWidth, H=window.innerHeight;
+  const tw=textEl.offsetWidth, th=textEl.offsetHeight;
+  const s = {
+    'up':    [{x:(W-tw)/2, y:H}, {x:(W-tw)/2, y: settings.keepText ? 0 : -th}],
+    'down':  [{x:(W-tw)/2, y:-th}, {x:(W-tw)/2, y: settings.keepText ? H-th : H}],
+    'left':  [{x:W, y:(H-th)/2}, {x: settings.keepText ? 0 : -tw, y:(H-th)/2}],
+    'right': [{x:-tw, y:(H-th)/2}, {x: settings.keepText ? W-tw : W, y:(H-th)/2}],
+    'diag-ul':[{x:W, y:H}, {x: settings.keepText?0:-tw, y: settings.keepText?0:-th}],
+    'diag-ur':[{x:-tw, y:H}, {x: settings.keepText?W-tw:W, y: settings.keepText?0:-th}],
+    'diag-dl':[{x:W, y:-th}, {x: settings.keepText?0:-tw, y: settings.keepText?H-th:H}],
+    'diag-dr':[{x:-tw, y:-th}, {x: settings.keepText?W-tw:W, y: settings.keepText?H-th:H}],
+  };
+  const pair = s[dir] || s['up'];
+  return {start: pair[0], end: pair[1]};
+}
+
+function startText(idx){
+  if(animId)cancelAnimationFrame(animId);
+  currentIdx=idx; paused=false; stopped=false;
+  applySettings();
+  const t=texts[idx]; if(!t)return;
+  const c=document.getElementById('textContent');
+  c.textContent=t.content||'';
+  document.getElementById('cueNum').textContent=(idx+1)+' / '+texts.length;
+  document.getElementById('overlay').style.display='none';
+  const wrap=document.getElementById('textWrap');
+  wrap.style.transform='translate(0,0)';
+  requestAnimationFrame(()=>{
+    const dir=settings.dir||'up';
+    const speed=settings.speed||60;
+    const positions=computePositions(dir, c);
+    startPos={...positions.start}; endPos={...positions.end};
+    const dx=endPos.x-startPos.x, dy=endPos.y-startPos.y;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    totalDuration=(dist/speed)*1000;
+    pos={...startPos}; startTime=performance.now();
+    wrap.style.left='0'; wrap.style.top='0';
+    wrap.style.width=window.innerWidth+'px';
+    animate();
+  });
+}
+function animate(){
+  if(paused||stopped)return;
+  const now=performance.now();
+  const elapsed=now-startTime;
+  const t=Math.min(elapsed/totalDuration,1);
+  const x=startPos.x+(endPos.x-startPos.x)*t;
+  const y=startPos.y+(endPos.y-startPos.y)*t;
+  document.getElementById('textWrap').style.transform=\`translate(\${x}px, \${y}px)\`;
+  if(t<1)animId=requestAnimationFrame(animate);
+}
+function doPause(){
+  if(stopped)return;
+  paused=!paused;
+  if(!paused){
+    const wrap=document.getElementById('textWrap');
+    const style=wrap.style.transform;
+    const match=style.match(/translate\\(([^,]+)px,\\s*([^)]+)px\\)/);
+    if(match){
+      const cx=parseFloat(match[1]), cy=parseFloat(match[2]);
+      const dx=endPos.x-cx, dy=endPos.y-cy;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      const speed=settings.speed||60;
+      totalDuration=(dist/speed)*1000;
+      startPos={x:cx,y:cy}; startTime=performance.now();
+    }
+    animate();
+  }
+}
+function doStop(){
+  if(animId)cancelAnimationFrame(animId);
+  stopped=true; paused=false;
+  document.getElementById('overlay').style.display='flex';
+  document.getElementById('overlay').innerHTML='<h2>GESTOPPT</h2><p>Warten auf nächsten Cue…</p>';
+}
+window.addEventListener('storage',e=>{
+  if(e.key===STORE+'texts'){texts=getT();}
+  if(e.key===STORE+'settings'){applySettings();}
+  if(e.key===STORE+'msg'){
+    try{const msg=JSON.parse(e.newValue||'{}');
+      if(msg.type==='cue'){texts=getT();startText(msg.idx);}
+      if(msg.type==='pause'){doPause();}
+      if(msg.type==='resume'){if(paused)doPause();}
+      if(msg.type==='stop'){doStop();}
+      if(msg.type==='settings'){settings=msg.data;applySettings();}
+    }catch(err){}
+  }
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='f'||e.key==='F'){if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen();}
+});
+texts=getT(); applySettings();
+<\/script></body></html>`; }
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+function init() {
+  loadTexts();
+  buildSwatches('colorSwatches', textColors, 'textColor', '#f0efe8');
+  buildSwatches('bgSwatches', bgColors, 'bgColor', '#000000');
+  loadSettingsUI();
+  if (!getSettings().dir) saveSettings();
+}
+init();
+</script>
+</body>
+</html>
