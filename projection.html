@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teleprompter — Projektion</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100%; height: 100%;
+    background: #000;
+    overflow: hidden;
+    cursor: none;
+  }
+  #stage {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+  #textWrap {
+    position: absolute;
+    left: 0; top: 0;
+    width: 100%;
+    will-change: transform;
+    transform: translate(0, 100vh); /* starts off-screen, awaits cue */
+  }
+  #textContent {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  /* Tiny unobtrusive cue indicator — bottom-right, very dim */
+  #cueTag {
+    position: fixed;
+    bottom: 1rem;
+    right: 1.5rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.12);
+    pointer-events: none;
+    z-index: 10;
+    letter-spacing: 0.06em;
+  }
+  /* F = fullscreen hint, fades after 3s */
+  #hint {
+    position: fixed;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.18);
+    pointer-events: none;
+    z-index: 10;
+    transition: opacity 1s;
+  }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="textWrap">
+    <div id="textContent"></div>
+  </div>
+</div>
+<div id="cueTag"></div>
+<div id="hint">F — Vollbild</div>
+
+<script>
+const STORE = 'tp_';
+let texts = [], settings = {}, animId = null;
+let startPos = {x:0, y:0}, endPos = {x:0, y:0};
+let animStartTime = 0, animTotalDuration = 0;
+let paused = false, stopped = true;
+let pausedX = 0, pausedY = 0;
+
+// Fade out the hint after 3 seconds
+setTimeout(() => { document.getElementById('hint').style.opacity = '0'; }, 3000);
+
+function getS()  { return JSON.parse(localStorage.getItem(STORE+'settings') || '{}'); }
+function getT()  { return JSON.parse(localStorage.getItem(STORE+'texts')    || '[]'); }
+
+function applySettings() {
+  settings = getS();
+  const c = document.getElementById('textContent');
+  document.body.style.background    = settings.bgColor   || '#000000';
+  document.getElementById('stage').style.background = settings.bgColor || '#000000';
+  c.style.fontFamily  = settings.font      || "'Syne', sans-serif";
+  c.style.fontSize    = (settings.size     || 72)  + 'px';
+  c.style.lineHeight  = settings.lineH     || 1.6;
+  c.style.color       = settings.textColor || '#f0efe8';
+  c.style.fontWeight  = settings.weight    || '700';
+  c.style.textAlign   = settings.align     || 'left';
+  c.style.padding     = `0 ${settings.pad !== undefined ? settings.pad : 80}px`;
+  c.style.transform   = settings.mirror    ? 'scaleX(-1)' : '';
+}
+
+function computeTrajectory(dir) {
+  const W = window.innerWidth, H = window.innerHeight;
+  const wrap = document.getElementById('textWrap');
+  const tw = wrap.offsetWidth, th = wrap.offsetHeight;
+  const keep = settings.keepText;
+
+  const map = {
+    'up':      [ {x: (W-tw)/2, y: H},          {x: (W-tw)/2, y: keep ? 0 : -th}          ],
+    'down':    [ {x: (W-tw)/2, y: -th},         {x: (W-tw)/2, y: keep ? H-th : H}         ],
+    'left':    [ {x: W,        y: (H-th)/2},    {x: keep ? 0 : -tw, y: (H-th)/2}          ],
+    'right':   [ {x: -tw,      y: (H-th)/2},    {x: keep ? W-tw : W, y: (H-th)/2}         ],
+    'diag-ul': [ {x: W,        y: H},            {x: keep ? 0 : -tw, y: keep ? 0 : -th}   ],
+    'diag-ur': [ {x: -tw,      y: H},            {x: keep ? W-tw : W, y: keep ? 0 : -th}  ],
+    'diag-dl': [ {x: W,        y: -th},          {x: keep ? 0 : -tw, y: keep ? H-th : H}  ],
+    'diag-dr': [ {x: -tw,      y: -th},          {x: keep ? W-tw : W, y: keep ? H-th : H} ],
+  };
+  const pair = map[dir] || map['up'];
+  return { start: pair[0], end: pair[1] };
+}
+
+function startText(idx) {
+  if (animId) cancelAnimationFrame(animId);
+  paused = false; stopped = false;
+  applySettings();
+
+  const t = texts[idx];
+  if (!t) return;
+
+  const c = document.getElementById('textContent');
+  c.textContent = t.content || '';
+  document.getElementById('cueTag').textContent = `${idx+1} / ${texts.length}`;
+
+  const wrap = document.getElementById('textWrap');
+  wrap.style.transform = 'translate(0px, 0px)';
+  wrap.style.width = window.innerWidth + 'px';
+
+  // Let the DOM paint the text so we get correct offsetHeight
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const dir = settings.dir || 'up';
+      const speed = settings.speed || 60;
+      const pos = computeTrajectory(dir);
+      startPos = pos.start; endPos = pos.end;
+      const dx = endPos.x - startPos.x, dy = endPos.y - startPos.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      animTotalDuration = (dist / speed) * 1000;
+      animStartTime = performance.now();
+      animate();
+    });
+  });
+}
+
+function animate() {
+  if (paused || stopped) return;
+  const elapsed = performance.now() - animStartTime;
+  const t = Math.min(elapsed / animTotalDuration, 1);
+  const x = startPos.x + (endPos.x - startPos.x) * t;
+  const y = startPos.y + (endPos.y - startPos.y) * t;
+  document.getElementById('textWrap').style.transform = `translate(${x}px, ${y}px)`;
+  if (t < 1) {
+    animId = requestAnimationFrame(animate);
+  } else {
+    stopped = true;
+  }
+}
+
+function doPause() {
+  if (stopped) return;
+  if (!paused) {
+    cancelAnimationFrame(animId);
+    // Record current position so resume picks up exactly here
+    const wrap = document.getElementById('textWrap');
+    const m = wrap.style.transform.match(/translate\(([^,]+)px,\s*([^)]+)px\)/);
+    if (m) { pausedX = parseFloat(m[1]); pausedY = parseFloat(m[2]); }
+    paused = true;
+  } else {
+    // Resume: recalculate remaining distance from current pos
+    const dx = endPos.x - pausedX, dy = endPos.y - pausedY;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    const speed = settings.speed || 60;
+    animTotalDuration = (dist / speed) * 1000;
+    startPos = { x: pausedX, y: pausedY };
+    animStartTime = performance.now();
+    paused = false;
+    animate();
+  }
+}
+
+function doStop() {
+  if (animId) cancelAnimationFrame(animId);
+  stopped = true; paused = false;
+  // Fade out text content smoothly
+  const wrap = document.getElementById('textWrap');
+  wrap.style.transition = 'opacity 0.6s';
+  wrap.style.opacity = '0';
+  setTimeout(() => {
+    wrap.style.transition = '';
+    wrap.style.opacity = '1';
+    wrap.style.transform = 'translate(0px, 100vh)';
+    document.getElementById('textContent').textContent = '';
+    document.getElementById('cueTag').textContent = '';
+  }, 650);
+}
+
+// Storage listener — receives commands from conductor and settings
+window.addEventListener('storage', e => {
+  if (e.key === STORE+'texts') {
+    texts = JSON.parse(e.newValue || '[]');
+  }
+  if (e.key === STORE+'settings') {
+    applySettings();
+  }
+  if (e.key === STORE+'msg') {
+    try {
+      const msg = JSON.parse(e.newValue || '{}');
+      if (msg.type === 'cue')      { texts = getT(); startText(msg.idx); }
+      if (msg.type === 'pause')    { doPause(); }
+      if (msg.type === 'resume')   { if (paused) doPause(); }
+      if (msg.type === 'stop')     { doStop(); }
+      if (msg.type === 'settings') { settings = msg.data; applySettings(); }
+    } catch(err) {}
+  }
+});
+
+// F = fullscreen
+document.addEventListener('keydown', e => {
+  if (e.key === 'f' || e.key === 'F') {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+    else document.exitFullscreen();
+  }
+});
+
+// Init
+texts = getT();
+applySettings();
+</script>
+</body>
+</html>
