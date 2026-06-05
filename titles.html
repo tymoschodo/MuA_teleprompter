@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="de"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Dirigent — Teleprompter</title>
+<title>Titel-Operator — Teleprompter</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@100;200;300;400;500;600;700;800;900&family=Julius+Sans+One&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="panel.css">
 </head><body>
@@ -9,11 +9,11 @@
 
   <!-- Top bar -->
   <div class="topbar">
-    <h1 style="color:var(--ac)">Dirigent</h1>
+    <h1 style="color:#ff6b35">Titel-Operator</h1>
     <span class="pill idle" id="pill">BEREIT</span>
     <span style="font-family:var(--mono);font-size:.6rem;color:var(--mu);margin-left:.5rem" id="idxDisp">—</span>
-    <span style="margin-left:auto;font-family:var(--mono);font-size:.58rem;color:var(--mu)">→ projection-front.html</span>
-    <a class="btn btn-sm btn-ac" href="projection-front.html" target="_blank" style="margin-left:.5rem">▶ Projektion</a>
+    <span style="margin-left:auto;font-family:var(--mono);font-size:.58rem;color:var(--mu)">→ projection-back.html</span>
+    <a class="btn btn-sm btn-ac" href="projection-back.html" target="_blank" style="margin-left:.5rem">▶ Projektion</a>
   </div>
 
   <!-- Sidebar -->
@@ -214,12 +214,12 @@
 <script src="control-panel.js"></script>
 <script>
 initPanel({
-  namespace:    "tp_front_",
-  projectionUrl:"projection-front.html",
-  defaultBg:    "#000000",
-  defaultColor: "#f0efe8",
-  defaultMode:  "scroll",
-  label:        "Dirigent"
+  namespace:    "tp_back_",
+  projectionUrl:"projection-back.html",
+  defaultBg:    "#ffffff",
+  defaultColor: "#000000",
+  defaultMode:  "display",
+  label:        "Titel-Operator"
 });
 </script>
 </body></html>
