@@ -2,242 +2,231 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>Teleprompter — Dirigent</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0a0a0b;
-    --surface: #141417;
-    --surface2: #1e1e22;
-    --border: #2a2a30;
-    --accent: #e8ff47;
-    --accent2: #ff6b35;
-    --text: #f0efe8;
-    --muted: #666;
-    --danger: #ff4444;
-    --green: #44dd88;
-    --font-display: 'Syne', sans-serif;
-    --font-mono: 'Space Mono', monospace;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; overflow: hidden; }
-  body { background: var(--bg); color: var(--text); font-family: var(--font-display); display: flex; flex-direction: column; }
-
-  /* Top bar */
-  .topbar { display: flex; align-items: center; gap: 0.75rem; padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-  .topbar-title { font-size: 0.9rem; font-weight: 800; letter-spacing: 0.06em; color: var(--accent); }
-  .pill { font-family: var(--font-mono); font-size: 0.65rem; padding: 0.2rem 0.6rem; border-radius: 3px; border: 1px solid var(--border); letter-spacing: 0.04em; }
-  .pill-idle    { color: var(--muted); border-color: var(--border); }
-  .pill-running { color: var(--accent2); border-color: var(--accent2); animation: blink 1.2s ease infinite; }
-  .pill-paused  { color: var(--accent); border-color: var(--accent); }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
-
-  /* Progress panel */
-  .prog-panel { padding: 1rem 1.25rem 0.85rem; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-  .prog-label  { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.35rem; }
-  .prog-title  { font-size: 1.15rem; font-weight: 800; min-height: 1.6rem; margin-bottom: 0.7rem; line-height: 1.2; }
-  .prog-bar    { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin-bottom: 0.35rem; }
-  .prog-fill   { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 3px; transition: width 0.4s ease; width: 0%; }
-  .prog-meta   { display: flex; justify-content: space-between; align-items: baseline; }
-  .prog-pct    { font-family: var(--font-mono); font-size: 1.6rem; font-weight: 700; color: var(--accent); line-height: 1; }
-  .prog-sub    { font-family: var(--font-mono); font-size: 0.65rem; color: var(--muted); text-align: right; line-height: 1.5; }
-
-  /* Big CUE button */
-  .cue-zone { padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border); flex-shrink: 0; display: flex; gap: 0.65rem; align-items: center; }
-  .btn-cue { flex: 1; font-family: var(--font-display); font-size: 1.1rem; font-weight: 800; letter-spacing: 0.06em; padding: 1rem; border-radius: 6px; border: none; background: var(--accent); color: #0a0a0b; cursor: pointer; transition: all 0.12s; touch-action: manipulation; }
-  .btn-cue:active { transform: scale(0.97); background: #fff; }
-  .btn-cue:disabled { opacity: 0.25; cursor: default; }
-  .btn { font-family: var(--font-display); font-size: 0.8rem; font-weight: 700; padding: 0.7rem 1rem; border-radius: 6px; border: 1.5px solid var(--border); background: var(--surface2); color: var(--text); cursor: pointer; transition: all 0.12s; touch-action: manipulation; white-space: nowrap; }
-  .btn:active { transform: scale(0.96); }
-  .btn-pause { border-color: var(--accent2); color: var(--accent2); }
-  .btn-pause:active { background: var(--accent2); color: #0a0a0b; }
-  .btn-stop  { border-color: var(--danger); color: var(--danger); }
-  .btn-stop:active  { background: var(--danger); color: #fff; }
-  .btn:disabled { opacity: 0.25; cursor: default; }
-
-  /* Text list */
-  .list-wrap { flex: 1; overflow-y: auto; padding: 0.6rem 0.9rem; -webkit-overflow-scrolling: touch; }
-  .list-wrap::-webkit-scrollbar { width: 3px; }
-  .list-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-  .t-item { padding: 0.75rem 0.9rem; border-radius: 5px; border: 1px solid transparent; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.7rem; transition: all 0.2s; }
-  .t-item.waiting { opacity: 0.4; }
-  .t-item.active  { border-color: var(--accent2); background: rgba(255,107,53,0.08); opacity: 1; }
-  .t-item.done    { border-color: rgba(68,221,136,0.25); background: rgba(68,221,136,0.04); opacity: 0.7; }
-  .t-num   { font-family: var(--font-mono); font-size: 0.6rem; color: var(--muted); min-width: 1.4rem; }
-  .t-name  { font-size: 0.85rem; font-weight: 600; flex: 1; }
-  .t-icon  { font-size: 0.8rem; }
-
-  .hint { text-align: center; padding: 0.55rem; font-family: var(--font-mono); font-size: 0.6rem; color: var(--muted); border-top: 1px solid var(--border); flex-shrink: 0; }
+:root{--bg:#0a0a0b;--sf:#141417;--sf2:#1e1e22;--bd:#2a2a30;--ac:#e8ff47;--ac2:#ff6b35;--tx:#f0efe8;--mu:#666;--dn:#ff4444;--fm:'Syne',sans-serif;--mono:'Space Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--tx);font-family:var(--fm);display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:.75rem;padding:.8rem 1.2rem;border-bottom:1px solid var(--bd);flex-shrink:0}
+.title{font-size:.9rem;font-weight:800;letter-spacing:.06em;color:var(--ac)}
+.pill{font-family:var(--mono);font-size:.62rem;padding:.2rem .55rem;border-radius:3px;border:1px solid var(--bd);letter-spacing:.04em}
+.idle{color:var(--mu);border-color:var(--bd)}
+.running{color:var(--ac2);border-color:var(--ac2);animation:blink 1.2s ease infinite}
+.paused{color:var(--ac);border-color:var(--ac)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.prog{padding:.9rem 1.2rem .8rem;border-bottom:1px solid var(--bd);flex-shrink:0}
+.prog-lbl{font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu);margin-bottom:.3rem}
+.prog-title{font-size:1.1rem;font-weight:800;min-height:1.5rem;margin-bottom:.6rem;line-height:1.2}
+.prog-bar{height:5px;background:var(--sf2);border-radius:3px;overflow:hidden;margin-bottom:.32rem}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--ac),var(--ac2));border-radius:3px;transition:width .4s ease;width:0%}
+.prog-meta{display:flex;justify-content:space-between;align-items:baseline}
+.prog-pct{font-family:var(--mono);font-size:1.5rem;font-weight:700;color:var(--ac);line-height:1}
+.prog-sub{font-family:var(--mono);font-size:.62rem;color:var(--mu);text-align:right;line-height:1.5}
+/* Controls */
+.controls{padding:.7rem 1.2rem;border-bottom:1px solid var(--bd);flex-shrink:0;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.45rem}
+.btn{font-family:var(--fm);font-size:.78rem;font-weight:700;letter-spacing:.02em;padding:.65rem .5rem;border-radius:5px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx);cursor:pointer;transition:all .12s;touch-action:manipulation;text-align:center;line-height:1.2}
+.btn:active{transform:scale(.96)}
+.btn:disabled{opacity:.22;cursor:default}
+.btn-back{border-color:#555;color:#aaa}
+.btn-back:active{background:#555;color:#fff}
+.btn-cue{background:var(--ac);color:#0a0a0b;border-color:var(--ac);grid-column:span 1}
+.btn-cue:active{background:#fff}
+.btn-pause{border-color:var(--ac2);color:var(--ac2)}
+.btn-pause:active{background:var(--ac2);color:#0a0a0b}
+.btn-stop{border-color:var(--dn);color:var(--dn)}
+.btn-stop:active{background:var(--dn);color:#fff}
+/* List */
+.list{flex:1;overflow-y:auto;padding:.55rem .85rem;-webkit-overflow-scrolling:touch}
+.list::-webkit-scrollbar{width:3px}.list::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px}
+.ti{padding:.65rem .85rem;border-radius:4px;border:1px solid transparent;margin-bottom:.3rem;display:flex;align-items:center;gap:.65rem;transition:all .18s}
+.ti.waiting{opacity:.38}
+.ti.active{border-color:var(--ac2);background:rgba(255,107,53,.08);opacity:1}
+.ti.done{border-color:rgba(68,221,136,.22);background:rgba(68,221,136,.04);opacity:.6}
+.tnum{font-family:var(--mono);font-size:.58rem;color:var(--mu);min-width:1.3rem}
+.tname{font-size:.82rem;font-weight:600;flex:1}
+.ticon{font-size:.78rem;min-width:.9rem;text-align:center}
+.hint{text-align:center;padding:.5rem;font-family:var(--mono);font-size:.58rem;color:var(--mu);border-top:1px solid var(--bd);flex-shrink:0}
 </style>
 </head>
 <body>
-
 <div class="topbar">
-  <span class="topbar-title">DIRIGENT</span>
-  <span class="pill pill-idle" id="pill">BEREIT</span>
-  <span style="margin-left:auto;font-family:var(--font-mono);font-size:0.6rem;color:var(--muted)" id="idxDisplay">—</span>
+  <span class="title">DIRIGENT</span>
+  <span class="pill idle" id="pill">BEREIT</span>
+  <span style="margin-left:auto;font-family:var(--mono);font-size:.58rem;color:var(--mu)" id="idxDisp">—</span>
 </div>
 
-<div class="prog-panel">
-  <div class="prog-label">Aktueller Text</div>
+<div class="prog">
+  <div class="prog-lbl">Aktueller Text</div>
   <div class="prog-title" id="curTitle">—</div>
-  <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+  <div class="prog-bar"><div class="prog-fill" id="fill"></div></div>
   <div class="prog-meta">
-    <div class="prog-pct" id="progPct">0%</div>
-    <div class="prog-sub" id="progSub">0:00<br>0 / 0 Wörter</div>
+    <div class="prog-pct" id="pct">0%</div>
+    <div class="prog-sub" id="sub">0:00<br>0 / 0 Wörter</div>
   </div>
 </div>
 
-<div class="cue-zone">
-  <button class="btn-cue" id="btnCue" onclick="doCue()">▶ CUE</button>
+<div class="controls">
+  <button class="btn btn-back" id="btnBack" onclick="doBack()">◀ Zurück</button>
+  <button class="btn btn-cue"  id="btnCue"  onclick="doCue()">▶ CUE</button>
   <button class="btn btn-pause" id="btnPause" onclick="doPause()" disabled>⏸</button>
   <button class="btn btn-stop"  id="btnStop"  onclick="doStop()"  disabled>⏹</button>
 </div>
 
-<div class="list-wrap" id="listWrap"></div>
-<div class="hint">Leertaste oder Fußpedal → CUE</div>
+<div class="list" id="list"></div>
+<div class="hint">Leertaste/Pedal → CUE &nbsp;·&nbsp; Backspace/← → Zurück</div>
 
 <script>
-const STORE = 'tp_';
-let texts = [], curIdx = -1, state = 'idle';
-let progInterval = null, startTime = 0, totalDuration = 0, totalWords = 0;
-let pausedAt = 0, pausedElapsed = 0;
+const S='tp_';
+let texts=[],curIdx=-1,state='idle';
+let progInt=null,startTime=0,totalDur=0,totalWords=0,pausedElapsed=0;
 
-function getSettings() { return JSON.parse(localStorage.getItem(STORE+'settings') || '{}'); }
+function getG(){return JSON.parse(localStorage.getItem(S+'global')||'{}')}
+function broadcast(msg){localStorage.setItem(S+'msg',JSON.stringify({...msg,ts:Date.now()}))}
 
-function broadcast(msg) {
-  localStorage.setItem(STORE+'msg', JSON.stringify({ ...msg, ts: Date.now() }));
+function loadTexts(){
+  const r=localStorage.getItem(S+'texts');
+  texts=r?JSON.parse(r):[];renderList();
 }
 
-function loadTexts() {
-  const raw = localStorage.getItem(STORE+'texts');
-  texts = raw ? JSON.parse(raw) : [];
-  renderList();
-}
-
-function renderList() {
-  const el = document.getElementById('listWrap');
-  el.innerHTML = '';
-  texts.forEach((t, i) => {
-    const d = document.createElement('div');
-    const cls = i === curIdx ? 'active' : (t.status === 'done' ? 'done' : 'waiting');
-    const icon = i === curIdx
-      ? (state === 'running' ? '►' : state === 'paused' ? '⏸' : '·')
-      : (t.status === 'done' ? '✓' : '');
-    d.className = 't-item ' + cls;
-    d.innerHTML = `<span class="t-num">${String(i+1).padStart(2,'0')}</span><span class="t-name">${t.title||'(kein Titel)'}</span><span class="t-icon">${icon}</span>`;
+function renderList(){
+  const el=document.getElementById('list');el.innerHTML='';
+  texts.forEach((t,i)=>{
+    const cls=i===curIdx?'active':t.status==='done'?'done':'waiting';
+    const icon=i===curIdx?(state==='running'?'►':state==='paused'?'⏸':'·'):t.status==='done'?'✓':'';
+    const d=document.createElement('div');
+    d.className='ti '+cls;
+    d.innerHTML=`<span class="tnum">${String(i+1).padStart(2,'0')}</span><span class="tname">${t.title||'(kein Titel)'}</span><span class="ticon">${icon}</span>`;
     el.appendChild(d);
   });
-  if (curIdx >= 0) {
-    const items = el.querySelectorAll('.t-item');
-    if (items[curIdx]) items[curIdx].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  }
+  if(curIdx>=0){const items=el.querySelectorAll('.ti');if(items[curIdx])items[curIdx].scrollIntoView({block:'nearest',behavior:'smooth'});}
 }
 
-function setState(s) {
-  state = s;
-  const pill = document.getElementById('pill');
-  const labels = { idle: ['BEREIT','pill-idle'], running: ['LÄUFT','pill-running'], paused: ['PAUSE','pill-paused'] };
-  const [txt, cls] = labels[s];
-  pill.textContent = txt;
-  pill.className = 'pill ' + cls;
-  document.getElementById('btnPause').disabled = (s === 'idle');
-  document.getElementById('btnStop').disabled  = (s === 'idle');
-  document.getElementById('btnCue').disabled   = (s === 'running');
+function setState(s){
+  state=s;
+  const pill=document.getElementById('pill');
+  const map={idle:['BEREIT','idle'],running:['LÄUFT','running'],paused:['PAUSE','paused']};
+  const [txt,cls]=map[s];
+  pill.textContent=txt;pill.className='pill '+cls;
+  document.getElementById('btnPause').disabled=(s==='idle');
+  document.getElementById('btnStop').disabled=(s==='idle');
+  document.getElementById('btnCue').disabled=(s==='running');
+  document.getElementById('btnBack').disabled=(s==='running');
 }
 
-function doCue() {
-  if (state === 'running') return;
-  const next = curIdx + 1;
-  if (next >= texts.length) { alert('Alle ' + texts.length + ' Texte wurden gezeigt!'); return; }
-  if (curIdx >= 0 && texts[curIdx]) texts[curIdx].status = 'done';
-  curIdx = next;
-  texts[curIdx].status = 'active';
-  document.getElementById('curTitle').textContent = texts[curIdx].title || '(kein Titel)';
-  document.getElementById('idxDisplay').textContent = (curIdx+1) + ' / ' + texts.length;
-  totalWords = (texts[curIdx].content || '').split(/\s+/).filter(Boolean).length;
-  pausedElapsed = 0;
-  resetProgress();
+function activateText(idx){
+  // Mark prev done, new active
+  if(curIdx>=0&&texts[curIdx])texts[curIdx].status='done';
+  curIdx=idx;
+  texts[curIdx].status='active';
+  document.getElementById('curTitle').textContent=texts[curIdx].title||'(kein Titel)';
+  document.getElementById('idxDisp').textContent=(curIdx+1)+' / '+texts.length;
+  totalWords=(texts[curIdx].content||'').split(/\s+/).filter(Boolean).length;
+  pausedElapsed=0;resetProg();
+}
+
+function doCue(){
+  if(state==='running')return;
+  const next=curIdx+1;
+  if(next>=texts.length){alert('Alle '+texts.length+' Texte wurden gezeigt!');return;}
+  activateText(next);
   setState('running');
-  broadcast({ type: 'cue', idx: curIdx });
-  startProgress();
-  renderList();
+  broadcast({type:'cue',idx:curIdx});
+  startProg();renderList();
 }
 
-function doPause() {
-  if (state === 'running') {
-    clearInterval(progInterval);
-    pausedElapsed += Date.now() - startTime;
-    setState('paused');
-    broadcast({ type: 'pause' });
-  } else if (state === 'paused') {
-    startTime = Date.now();
-    startProgress();
-    setState('running');
-    broadcast({ type: 'resume' });
+function doBack(){
+  if(state==='running')return;
+  const prev=curIdx-1;
+  if(prev<0)return;
+  // Revert current to waiting
+  if(curIdx>=0&&texts[curIdx])texts[curIdx].status='waiting';
+  curIdx=prev;
+  texts[curIdx].status='waiting'; // will be set active by activateText
+  activateText(prev);
+  // Re-fire cue for the previous text
+  setState('running');
+  broadcast({type:'cue',idx:curIdx});
+  startProg();renderList();
+}
+
+function doPause(){
+  if(state==='running'){
+    clearInterval(progInt);
+    pausedElapsed+=Date.now()-startTime;
+    setState('paused');broadcast({type:'pause'});
+  }else if(state==='paused'){
+    startTime=Date.now();
+    startProg();setState('running');broadcast({type:'resume'});
   }
   renderList();
 }
 
-function doStop() {
-  clearInterval(progInterval);
-  if (curIdx >= 0 && texts[curIdx]) texts[curIdx].status = 'waiting';
-  setState('idle');
-  resetProgress();
-  broadcast({ type: 'stop' });
-  renderList();
+function doStop(){
+  clearInterval(progInt);
+  if(curIdx>=0&&texts[curIdx])texts[curIdx].status='waiting';
+  setState('idle');resetProg();
+  broadcast({type:'stop'});renderList();
 }
 
-function resetProgress() {
-  document.getElementById('progFill').style.width = '0%';
-  document.getElementById('progPct').textContent  = '0%';
-  document.getElementById('progSub').innerHTML    = '0:00<br>0 / ' + totalWords + ' Wörter';
+function resetProg(){
+  document.getElementById('fill').style.width='0%';
+  document.getElementById('pct').textContent='0%';
+  document.getElementById('sub').innerHTML='0:00<br>0 / '+totalWords+' Wörter';
 }
 
-function startProgress() {
-  clearInterval(progInterval);
-  const s = getSettings();
-  const speed  = s.speed  || 60;
-  const size   = s.size   || 72;
-  const lineH  = s.lineH  || 1.6;
-  const t = texts[curIdx]; if (!t) return;
-  const estLines = (t.content||'').split('\n').reduce((a, l) => a + Math.max(1, Math.ceil(l.length / 28)), 0);
-  const totalPx  = estLines * (size * lineH);
-  totalDuration  = (totalPx / speed) * 1000;
-  startTime = Date.now();
-
-  progInterval = setInterval(() => {
-    const elapsed = pausedElapsed + (Date.now() - startTime);
-    const pct = Math.min(100, Math.round((elapsed / totalDuration) * 100));
-    document.getElementById('progFill').style.width = pct + '%';
-    document.getElementById('progPct').textContent  = pct + '%';
-    const sec = Math.floor((pausedElapsed + (Date.now() - startTime)) / 1000);
-    const m = Math.floor(sec / 60), ss = sec % 60;
-    const wDone = Math.round(pct / 100 * totalWords);
-    document.getElementById('progSub').innerHTML = `${m}:${ss<10?'0':''}${ss}<br>${wDone} / ${totalWords} Wörter`;
-    if (pct >= 100) {
-      clearInterval(progInterval);
-      setState('idle');
-      if (texts[curIdx]) texts[curIdx].status = 'done';
-      renderList();
-    }
-  }, 250);
+function startProg(){
+  clearInterval(progInt);
+  const g=getG();
+  const t=texts[curIdx];if(!t)return;
+  const speed=(t.speed||g.speed||60);
+  const size=g.size||72;
+  const lineH=g.lineH||1.6;
+  const mode=g.mode||'scroll';
+  if(mode==='display'){
+    // For display mode, progress = duration countdown
+    const dur=(t.duration||5)*1000;
+    startTime=Date.now();
+    progInt=setInterval(()=>{
+      const el=pausedElapsed+(Date.now()-startTime);
+      const p=Math.min(100,Math.round((el/dur)*100));
+      updateProgUI(p,el);
+      if(p>=100){clearInterval(progInt);setState('idle');if(texts[curIdx])texts[curIdx].status='done';renderList();}
+    },200);
+  }else{
+    // Scroll mode
+    const estLines=(t.content||'').split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length/28)),0);
+    totalDur=(estLines*(size*lineH)/speed)*1000;
+    startTime=Date.now();
+    progInt=setInterval(()=>{
+      const el=pausedElapsed+(Date.now()-startTime);
+      const p=Math.min(100,Math.round((el/totalDur)*100));
+      updateProgUI(p,el);
+      if(p>=100){clearInterval(progInt);setState('idle');if(texts[curIdx])texts[curIdx].status='done';renderList();}
+    },200);
+  }
 }
 
-// Listen for changes from settings page
-window.addEventListener('storage', e => {
-  if (e.key === STORE+'texts') { texts = JSON.parse(e.newValue || '[]'); renderList(); }
+function updateProgUI(p,elapsedMs){
+  document.getElementById('fill').style.width=p+'%';
+  document.getElementById('pct').textContent=p+'%';
+  const sec=Math.floor(elapsedMs/1000),m=Math.floor(sec/60),ss=sec%60;
+  const wd=Math.round(p/100*totalWords);
+  document.getElementById('sub').innerHTML=`${m}:${ss<10?'0':''}${ss}<br>${wd} / ${totalWords} Wörter`;
+}
+
+window.addEventListener('storage',e=>{
+  if(e.key===S+'texts'){texts=JSON.parse(e.newValue||'[]');renderList();}
 });
 
-// Keyboard / pedal
-document.addEventListener('keydown', e => {
-  if (e.code === 'Space') { e.preventDefault(); if (state !== 'running') doCue(); }
+document.addEventListener('keydown',e=>{
+  if(e.code==='Space'){e.preventDefault();if(state!=='running')doCue();}
+  if(e.code==='Backspace'||e.code==='ArrowLeft'){e.preventDefault();if(state!=='running')doBack();}
 });
 
-loadTexts();
-setState('idle');
+loadTexts();setState('idle');
 </script>
 </body>
 </html>

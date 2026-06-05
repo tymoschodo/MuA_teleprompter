@@ -4,540 +4,396 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Teleprompter — Einstellungen</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;500;600;700;800&family=Julius+Sans+One&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0e0e0f; --surface: #1a1a1d; --surface2: #242428; --border: #2e2e33;
-    --accent: #e8ff47; --accent2: #ff6b35; --text: #f0efe8; --muted: #888780;
-    --danger: #ff4444; --font-display: 'Syne', sans-serif; --font-mono: 'Space Mono', monospace; --radius: 6px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: var(--font-display); min-height: 100vh; padding: 2rem; }
-  h1 { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.03em; color: var(--accent); margin-bottom: 0.25rem; }
-  h2 { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
-
-  .layout { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; max-width: 1400px; margin: 0 auto; }
-  .layout-header { grid-column: 1/-1; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 1rem; }
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
-  .card-full { grid-column: 1/-1; }
-  .col-span-2 { grid-column: span 2; }
-
-  .launch-bar { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-  .btn { font-family: var(--font-display); font-size: 0.82rem; font-weight: 700; letter-spacing: 0.04em; padding: 0.55rem 1.1rem; border-radius: var(--radius); border: 1.5px solid var(--border); background: var(--surface2); color: var(--text); cursor: pointer; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; }
-  .btn:hover { border-color: var(--accent); color: var(--accent); }
-  .btn-accent { background: var(--accent); color: #0e0e0f; border-color: var(--accent); }
-  .btn-accent:hover { background: #fff; border-color: #fff; color: #0e0e0f; }
-  .btn-danger { border-color: var(--danger); color: var(--danger); background: transparent; }
-  .btn-danger:hover { background: var(--danger); color: #fff; }
-  .btn-sm { font-size: 0.72rem; padding: 0.3rem 0.75rem; }
-
-  label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 0.35rem; margin-top: 0.85rem; }
-  label:first-child { margin-top: 0; }
-  input[type=text], select, textarea {
-    width: 100%; background: var(--bg); border: 1px solid var(--border);
-    border-radius: var(--radius); color: var(--text); font-family: var(--font-mono);
-    font-size: 0.82rem; padding: 0.5rem 0.7rem; transition: border 0.15s;
-  }
-  input[type=text]:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
-  textarea { resize: vertical; min-height: 100px; }
-  select option { background: #1a1a1d; }
-
-  input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
-  .range-row { display: flex; align-items: center; gap: 0.75rem; }
-  .range-val { font-family: var(--font-mono); font-size: 0.82rem; color: var(--accent); min-width: 3.5rem; text-align: right; }
-
-  /* Text list */
-  .text-list { display: flex; flex-direction: column; gap: 0.35rem; max-height: 480px; overflow-y: auto; padding-right: 4px; }
-  .text-list::-webkit-scrollbar { width: 4px; }
-  .text-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-  .text-item { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.55rem 0.8rem; cursor: pointer; transition: border-color 0.15s; display: flex; align-items: center; gap: 0.6rem; }
-  .text-item:hover { border-color: var(--muted); }
-  .text-item.active { border-color: var(--accent); }
-  .text-num { font-family: var(--font-mono); font-size: 0.62rem; color: var(--muted); min-width: 1.4rem; }
-  .text-title { font-size: 0.82rem; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .text-preset-badge { font-family: var(--font-mono); font-size: 0.58rem; padding: 0.15rem 0.45rem; border-radius: 3px; border: 1px solid var(--border); color: var(--muted); white-space: nowrap; max-width: 90px; overflow: hidden; text-overflow: ellipsis; }
-  .text-preset-badge.assigned { border-color: var(--accent2); color: var(--accent2); }
-
-  /* Preset list */
-  .preset-list { display: flex; flex-direction: column; gap: 0.35rem; max-height: 220px; overflow-y: auto; padding-right: 4px; margin-bottom: 0.75rem; }
-  .preset-list::-webkit-scrollbar { width: 4px; }
-  .preset-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-  .preset-item { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.5rem 0.8rem; cursor: pointer; transition: border-color 0.15s; display: flex; align-items: center; gap: 0.6rem; }
-  .preset-item:hover { border-color: var(--muted); }
-  .preset-item.active { border-color: var(--accent2); }
-  .preset-name { font-size: 0.82rem; font-weight: 600; flex: 1; }
-  .preset-desc { font-family: var(--font-mono); font-size: 0.6rem; color: var(--muted); }
-
-  /* Colors */
-  .color-row { display: flex; gap: 0.45rem; flex-wrap: wrap; margin-top: 0.35rem; }
-  .color-swatch { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.15s; }
-  .color-swatch:hover { transform: scale(1.15); }
-  .color-swatch.sel { border-color: var(--accent); }
-
-  .info-strip { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); margin-top: 0.9rem; padding-top: 0.85rem; border-top: 1px solid var(--border); }
-  .info-strip span { color: var(--accent); }
-
-  .toggle-row { display: flex; align-items: center; gap: 0.7rem; margin-top: 0.85rem; }
-  .toggle { position: relative; width: 38px; height: 20px; flex-shrink: 0; }
-  .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
-  .toggle-slider { position: absolute; inset: 0; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: 0.2s; }
-  .toggle-slider::after { content: ''; position: absolute; width: 12px; height: 12px; left: 3px; top: 3px; background: var(--muted); border-radius: 50%; transition: 0.2s; }
-  .toggle input:checked + .toggle-slider { background: var(--accent); border-color: var(--accent); }
-  .toggle input:checked + .toggle-slider::after { transform: translateX(18px); background: #0e0e0f; }
-  .toggle-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
-
-  .divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
-
-  @media (max-width: 900px) { .layout { grid-template-columns: 1fr 1fr; } }
-  @media (max-width: 600px) { .layout { grid-template-columns: 1fr; } .col-span-2 { grid-column: 1/-1; } }
+:root {
+  --bg:#0e0e0f;--surface:#1a1a1d;--surface2:#242428;--border:#2e2e33;
+  --accent:#e8ff47;--accent2:#ff6b35;--text:#f0efe8;--muted:#888780;
+  --danger:#ff4444;--fm:'Syne',sans-serif;--mono:'Space Mono',monospace;--r:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--fm);min-height:100vh;padding:2rem}
+h1{font-size:1.6rem;font-weight:800;letter-spacing:-0.03em;color:var(--accent);margin-bottom:.25rem}
+h2{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.9rem}
+.layout{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;max-width:1400px;margin:0 auto}
+.hdr{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;flex-wrap:wrap;gap:1rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem}
+.full{grid-column:1/-1}.span2{grid-column:span 2}
+.launch{display:flex;gap:.6rem;flex-wrap:wrap}
+.btn{font-family:var(--fm);font-size:.8rem;font-weight:700;letter-spacing:.04em;padding:.5rem 1rem;border-radius:var(--r);border:1.5px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:.35rem}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn-ac{background:var(--accent);color:#0e0e0f;border-color:var(--accent)}.btn-ac:hover{background:#fff;border-color:#fff;color:#0e0e0f}
+.btn-dn{border-color:var(--danger);color:var(--danger);background:transparent}.btn-dn:hover{background:var(--danger);color:#fff}
+.btn-sm{font-size:.7rem;padding:.28rem .7rem}
+lbl,label{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:.32rem;margin-top:.8rem}
+label:first-child{margin-top:0}
+input[type=text],select,textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:var(--mono);font-size:.82rem;padding:.48rem .68rem;transition:border .15s}
+input[type=text]:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+textarea{resize:vertical;min-height:100px}
+select option{background:#1a1a1d}
+input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
+.rrow{display:flex;align-items:center;gap:.7rem}
+.rval{font-family:var(--mono);font-size:.82rem;color:var(--accent);min-width:3.8rem;text-align:right}
+.tlist{display:flex;flex-direction:column;gap:.32rem;max-height:500px;overflow-y:auto;padding-right:3px}
+.tlist::-webkit-scrollbar{width:3px}.tlist::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.ti{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:.5rem .78rem;cursor:pointer;transition:border-color .15s;display:flex;align-items:center;gap:.55rem}
+.ti:hover{border-color:var(--muted)}.ti.sel{border-color:var(--accent)}
+.tnum{font-family:var(--mono);font-size:.6rem;color:var(--muted);min-width:1.4rem}
+.ttitle{font-size:.82rem;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tspeed{font-family:var(--mono);font-size:.6rem;color:var(--accent2);white-space:nowrap}
+.crow{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.35rem}
+.cs{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .15s}
+.cs:hover{transform:scale(1.15)}.cs.sel{border-color:var(--accent)}
+.info{font-family:var(--mono);font-size:.66rem;color:var(--muted);margin-top:.85rem;padding-top:.8rem;border-top:1px solid var(--border)}
+.info span{color:var(--accent)}
+.trow{display:flex;align-items:center;gap:.65rem;margin-top:.8rem}
+.tog{position:relative;width:38px;height:20px;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0;position:absolute}
+.tslide{position:absolute;inset:0;background:var(--surface2);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:.2s}
+.tslide::after{content:'';position:absolute;width:12px;height:12px;left:3px;top:3px;background:var(--muted);border-radius:50%;transition:.2s}
+.tog input:checked+.tslide{background:var(--accent);border-color:var(--accent)}
+.tog input:checked+.tslide::after{transform:translateX(18px);background:#0e0e0f}
+.tlbl{font-size:.73rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+hr{border:none;border-top:1px solid var(--border);margin:.9rem 0}
+.mode-tabs{display:flex;gap:.4rem;margin-bottom:.9rem}
+.mtab{font-family:var(--fm);font-size:.72rem;font-weight:700;padding:.32rem .8rem;border-radius:var(--r);border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s}
+.mtab.on{background:var(--accent);color:#0e0e0f;border-color:var(--accent)}
+.bw-row{display:flex;gap:.5rem;margin-bottom:.5rem}
+.bw-btn{flex:1;font-family:var(--fm);font-size:.75rem;font-weight:700;padding:.45rem;border-radius:var(--r);border:1.5px solid var(--border);cursor:pointer;transition:all .15s}
+.bw-btn.wob{background:#fff;color:#000;border-color:#fff}.bw-btn.bow{background:#000;color:#fff;border-color:#333}
+.bw-btn:hover{transform:scale(1.02)}
+@media(max-width:900px){.layout{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.layout{grid-template-columns:1fr}.span2{grid-column:1/-1}}
 </style>
 </head>
 <body>
 <div class="layout">
 
-  <!-- Header -->
-  <div class="layout-header">
+<div class="hdr">
+  <div><h1>TELEPROMPTER</h1><p style="font-size:.7rem;color:var(--muted);margin-top:.2rem;font-family:var(--mono)">MuA — Einstellungen</p></div>
+  <div class="launch">
+    <a class="btn" href="conductor.html" target="_blank">⊞ Dirigent</a>
+    <a class="btn btn-ac" href="projection-back.html" target="_blank">▶ Projektion (hinten)</a>
+    <a class="btn btn-ac" href="projection-front.html" target="_blank">▶ Projektion (vorne)</a>
+  </div>
+</div>
+
+<!-- Text list -->
+<div class="card" style="grid-row:span 2">
+  <h2>Texte</h2>
+  <div class="tlist" id="textList"></div>
+  <div style="display:flex;gap:.4rem;margin-top:.65rem;flex-wrap:wrap">
+    <button class="btn btn-sm" onclick="addText()">+ Neu</button>
+    <button class="btn btn-sm btn-dn" onclick="delText()">Löschen</button>
+    <button class="btn btn-sm" onclick="moveUp()">↑</button>
+    <button class="btn btn-sm" onclick="moveDown()">↓</button>
+  </div>
+</div>
+
+<!-- Text editor -->
+<div class="card">
+  <h2>Text bearbeiten</h2>
+  <label>Titel</label>
+  <input type="text" id="eTitle" placeholder="z.B. Arie I — Liebe" oninput="saveEdit()">
+  <label>Inhalt</label>
+  <textarea id="eContent" rows="6" placeholder="Text hier eingeben…" oninput="saveEdit()"></textarea>
+  <hr>
+  <label>Geschwindigkeit (nur dieser Text)</label>
+  <div class="rrow">
+    <input type="range" id="eSpeed" min="10" max="300" step="5" value="60"
+      oninput="saveEdit();document.getElementById('eSpeedVal').textContent=this.value+' px/s'">
+    <span class="rval" id="eSpeedVal">60 px/s</span>
+  </div>
+  <label>Anzeigedauer (Display-Modus)</label>
+  <div class="rrow">
+    <input type="range" id="eDur" min="1" max="30" step="0.5" value="5"
+      oninput="saveEdit();document.getElementById('eDurVal').textContent=parseFloat(this.value).toFixed(1)+'s'">
+    <span class="rval" id="eDurVal">5.0s</span>
+  </div>
+  <div class="info" id="eInfo">Kein Text ausgewählt</div>
+</div>
+
+<!-- Global settings -->
+<div class="card">
+  <h2>Globale Einstellungen</h2>
+
+  <label style="margin-top:0">Anzeigemodus</label>
+  <div class="mode-tabs">
+    <button class="mtab" id="modeScroll" onclick="setMode('scroll')">Scroll</button>
+    <button class="mtab" id="modeDisplay" onclick="setMode('display')">Display</button>
+  </div>
+
+  <label>Schnellwahl Farbe</label>
+  <div class="bw-row">
+    <button class="bw-btn wob" onclick="setScheme('wob')">Weiß auf Schwarz</button>
+    <button class="bw-btn bow" onclick="setScheme('bow')">Schwarz auf Weiß</button>
+  </div>
+
+  <label>Textfarbe</label>
+  <div class="crow" id="colorSwatches"></div>
+  <label>Hintergrundfarbe</label>
+  <div class="crow" id="bgSwatches"></div>
+
+  <hr>
+
+  <label>Richtung (Scroll-Modus)</label>
+  <select id="sDir" onchange="saveGlobal()">
+    <option value="up">↑ Unten → Oben (klassisch)</option>
+    <option value="down">↓ Oben → Unten</option>
+    <option value="left">← Rechts → Links</option>
+    <option value="right">→ Links → Rechts</option>
+    <option value="diag-ul">↖ Diagonal oben-links</option>
+    <option value="diag-ur">↗ Diagonal oben-rechts</option>
+    <option value="diag-dl">↙ Diagonal unten-links</option>
+    <option value="diag-dr">↘ Diagonal unten-rechts</option>
+  </select>
+
+  <label>Standardgeschwindigkeit</label>
+  <div class="rrow">
+    <input type="range" id="sSpeed" min="10" max="300" step="5" value="60"
+      oninput="saveGlobal();document.getElementById('sSpeedVal').textContent=this.value+' px/s'">
+    <span class="rval" id="sSpeedVal">60 px/s</span>
+  </div>
+
+  <div class="trow">
+    <label class="tog"><input type="checkbox" id="sKeep" onchange="saveGlobal()"><span class="tslide"></span></label>
+    <span class="tlbl">Vergangener Text bleibt sichtbar</span>
+  </div>
+  <div class="trow">
+    <label class="tog"><input type="checkbox" id="sMirror" onchange="saveGlobal()"><span class="tslide"></span></label>
+    <span class="tlbl">Text horizontal spiegeln</span>
+  </div>
+</div>
+
+<!-- Visual settings -->
+<div class="card span2">
+  <h2>Erscheinungsbild</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.2rem">
     <div>
-      <h1>TELEPROMPTER</h1>
-      <p style="font-size:0.72rem;color:var(--muted);margin-top:0.2rem;font-family:var(--font-mono)">MuA — Einstellungen</p>
+      <label style="margin-top:0">Schriftart</label>
+      <select id="sFont" onchange="saveGlobal()">
+        <option value="'Syne',sans-serif">Syne</option>
+        <option value="'Julius Sans One',sans-serif">Julius Sans One</option>
+        <option value="'Hiragino Sans W0','Hiragino Kaku Gothic ProN',sans-serif">Hiragino Sans W0</option>
+        <option value="'Hiragino Sans W1','Hiragino Kaku Gothic ProN',sans-serif">Hiragino Sans W1</option>
+        <option value="'Hiragino Sans W2','Hiragino Kaku Gothic ProN',sans-serif">Hiragino Sans W2</option>
+        <option value="'Hiragino Sans W3','Hiragino Kaku Gothic ProN',sans-serif">Hiragino Sans W3</option>
+        <option value="'Hiragino Sans W4','Hiragino Kaku Gothic ProN',sans-serif">Hiragino Sans W4</option>
+        <option value="'Hiragino Sans W5','Hiragino Kaku Gothic ProN',sans-serif">Hiragino Sans W5</option>
+        <option value="'Hiragino Sans W6','Hiragino Kaku Gothic ProN',sans-serif">Hiragino Sans W6</option>
+        <option value="'Hiragino Sans W7','Hiragino Kaku Gothic ProN',sans-serif">Hiragino Sans W7</option>
+        <option value="'Hiragino Sans W8','Hiragino Kaku Gothic ProN',sans-serif">Hiragino Sans W8</option>
+        <option value="'Hiragino Sans W9','Hiragino Kaku Gothic ProN',sans-serif">Hiragino Sans W9</option>
+        <option value="'Space Mono',monospace">Space Mono</option>
+        <option value="Georgia,serif">Georgia</option>
+        <option value="'Times New Roman',serif">Times New Roman</option>
+        <option value="'Helvetica Neue',sans-serif">Helvetica Neue</option>
+        <option value="'Arial',sans-serif">Arial</option>
+      </select>
+      <label>Schriftgewicht</label>
+      <select id="sWeight" onchange="saveGlobal()">
+        <option value="100">100 — Thin</option>
+        <option value="200">200 — ExtraLight</option>
+        <option value="300">300 — Light</option>
+        <option value="400">400 — Regular</option>
+        <option value="500">500 — Medium</option>
+        <option value="600">600 — SemiBold</option>
+        <option value="700" selected>700 — Bold</option>
+        <option value="800">800 — ExtraBold</option>
+        <option value="900">900 — Black</option>
+      </select>
     </div>
-    <div class="launch-bar">
-      <a class="btn" href="conductor.html" target="_blank">⊞ Dirigent</a>
-      <a class="btn btn-accent" href="projection.html" target="_blank">▶ Projektion</a>
-    </div>
-  </div>
-
-  <!-- Column 1: Text list -->
-  <div class="card" style="grid-row: span 2;">
-    <h2>Texte</h2>
-    <div class="text-list" id="textList"></div>
-    <div style="display:flex;gap:0.45rem;margin-top:0.7rem;flex-wrap:wrap;">
-      <button class="btn btn-sm" onclick="addText()">+ Neu</button>
-      <button class="btn btn-sm btn-danger" onclick="deleteText()">Löschen</button>
-      <button class="btn btn-sm" onclick="moveUp()">↑</button>
-      <button class="btn btn-sm" onclick="moveDown()">↓</button>
-    </div>
-  </div>
-
-  <!-- Column 2: Text editor -->
-  <div class="card">
-    <h2>Text bearbeiten</h2>
-    <label>Titel</label>
-    <input type="text" id="editTitle" placeholder="z.B. Arie I — Liebe" oninput="saveEdit()">
-    <label>Inhalt</label>
-    <textarea id="editContent" rows="7" placeholder="Text hier eingeben…" oninput="saveEdit()"></textarea>
-
-    <hr class="divider">
-
-    <label>Scroll-Preset zuweisen</label>
-    <select id="editPreset" onchange="saveEdit()">
-      <option value="">— Globale Einstellungen (kein Preset) —</option>
-    </select>
-
-    <div class="info-strip" id="editInfo">Kein Text ausgewählt</div>
-  </div>
-
-  <!-- Column 3: Preset library -->
-  <div class="card">
-    <h2>Preset-Bibliothek</h2>
-    <div class="preset-list" id="presetList"></div>
-    <div style="display:flex;gap:0.45rem;flex-wrap:wrap;margin-bottom:1rem;">
-      <button class="btn btn-sm" onclick="addPreset()">+ Neu</button>
-      <button class="btn btn-sm" onclick="duplicatePreset()">⧉ Kopie</button>
-      <button class="btn btn-sm btn-danger" onclick="deletePreset()">Löschen</button>
-    </div>
-
-    <hr class="divider" style="margin-top:0;">
-
-    <div id="presetEditor">
-      <p style="font-size:0.75rem;color:var(--muted);font-family:var(--font-mono);">Kein Preset ausgewählt.</p>
-    </div>
-  </div>
-
-  <!-- Column 2+3: Global visual settings -->
-  <div class="card col-span-2">
-    <h2>Globale Erscheinung</h2>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;">
-      <div>
-        <label style="margin-top:0;">Schriftart</label>
-        <select id="settFont" onchange="saveGlobal()">
-          <option value="'Syne', sans-serif">Syne</option>
-          <option value="'Space Mono', monospace">Space Mono</option>
-          <option value="Georgia, serif">Georgia</option>
-          <option value="'Times New Roman', serif">Times New Roman</option>
-          <option value="Impact, sans-serif">Impact</option>
-          <option value="'Arial', sans-serif">Arial</option>
-          <option value="'Helvetica Neue', sans-serif">Helvetica Neue</option>
-        </select>
-
-        <label>Schriftgröße</label>
-        <div class="range-row">
-          <input type="range" id="settSize" min="24" max="160" step="2" value="72" oninput="saveGlobal();document.getElementById('sizeVal').textContent=this.value+'px'">
-          <span class="range-val" id="sizeVal">72px</span>
-        </div>
-
-        <label>Schriftgewicht</label>
-        <select id="settWeight" onchange="saveGlobal()">
-          <option value="400">Normal</option>
-          <option value="600">Halbfett</option>
-          <option value="700" selected>Fett</option>
-          <option value="800">Sehr fett</option>
-        </select>
-
-        <label>Ausrichtung</label>
-        <select id="settAlign" onchange="saveGlobal()">
-          <option value="left">Linksbündig</option>
-          <option value="center">Zentriert</option>
-          <option value="right">Rechtsbündig</option>
-        </select>
+    <div>
+      <label style="margin-top:0">Schriftgröße</label>
+      <div class="rrow">
+        <input type="range" id="sSize" min="24" max="200" step="2" value="72"
+          oninput="saveGlobal();document.getElementById('sSizeVal').textContent=this.value+'px'">
+        <span class="rval" id="sSizeVal">72px</span>
       </div>
-      <div>
-        <label style="margin-top:0;">Textfarbe</label>
-        <div class="color-row" id="colorSwatches"></div>
-
-        <label>Hintergrundfarbe</label>
-        <div class="color-row" id="bgSwatches"></div>
-
-        <label>Seitenränder</label>
-        <div class="range-row">
-          <input type="range" id="settPad" min="0" max="300" step="10" value="80" oninput="saveGlobal();document.getElementById('padVal').textContent=this.value+'px'">
-          <span class="range-val" id="padVal">80px</span>
-        </div>
-
-        <div class="toggle-row" style="margin-top:1rem;">
-          <label class="toggle"><input type="checkbox" id="settMirror" onchange="saveGlobal()"><span class="toggle-slider"></span></label>
-          <span class="toggle-label">Text horizontal spiegeln</span>
-        </div>
+      <label>Zeilenabstand</label>
+      <div class="rrow">
+        <input type="range" id="sLineH" min="10" max="30" step="1" value="16"
+          oninput="saveGlobal();document.getElementById('sLineHVal').textContent=(this.value/10).toFixed(1)">
+        <span class="rval" id="sLineHVal">1.6</span>
+      </div>
+      <label>Ausrichtung</label>
+      <select id="sAlign" onchange="saveGlobal()">
+        <option value="left">Linksbündig</option>
+        <option value="center">Zentriert</option>
+        <option value="right">Rechtsbündig</option>
+      </select>
+    </div>
+    <div>
+      <label style="margin-top:0">Seitenränder</label>
+      <div class="rrow">
+        <input type="range" id="sPad" min="0" max="300" step="10" value="80"
+          oninput="saveGlobal();document.getElementById('sPadVal').textContent=this.value+'px'">
+        <span class="rval" id="sPadVal">80px</span>
+      </div>
+      <label>Einblend-Dauer (Display)</label>
+      <div class="rrow">
+        <input type="range" id="sFade" min="0.1" max="3" step="0.1" value="0.5"
+          oninput="saveGlobal();document.getElementById('sFadeVal').textContent=parseFloat(this.value).toFixed(1)+'s'">
+        <span class="rval" id="sFadeVal">0.5s</span>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Footer -->
-  <div class="card card-full" style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
-    <h2 style="margin:0;">Daten:</h2>
-    <button class="btn btn-sm" onclick="exportData()">↓ Exportieren</button>
-    <button class="btn btn-sm" onclick="document.getElementById('importFile').click()">↑ Importieren</button>
-    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
-    <button class="btn btn-sm btn-danger" onclick="if(confirm('Alles zurücksetzen?'))initDefaults()">↺ Zurücksetzen</button>
-    <span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--muted);margin-left:auto;">Leertaste / Fußpedal = nächsten Text starten</span>
-  </div>
+<!-- Footer -->
+<div class="card full" style="display:flex;gap:.7rem;align-items:center;flex-wrap:wrap">
+  <h2 style="margin:0">Daten:</h2>
+  <button class="btn btn-sm" onclick="exportData()">↓ Exportieren</button>
+  <button class="btn btn-sm" onclick="document.getElementById('iFile').click()">↑ Importieren</button>
+  <input type="file" id="iFile" accept=".json" style="display:none" onchange="importData(event)">
+  <button class="btn btn-sm btn-dn" onclick="if(confirm('Alles zurücksetzen?'))initDefaults()">↺ Zurücksetzen</button>
+  <span style="font-family:var(--mono);font-size:.6rem;color:var(--muted);margin-left:auto">Leertaste / Fußpedal = nächsten Text · Backspace/← = zurück</span>
+</div>
 
-</div><!-- .layout -->
-
+</div>
 <script>
-const STORE = 'tp_';
-const TEXT_COLORS = ['#f0efe8','#ffffff','#e8ff47','#ff6b35','#00ffcc','#ffaacc','#aaddff'];
-const BG_COLORS   = ['#000000','#0e0e0f','#1a1a1d','#0a0a20','#0d1a0d','#200a0a','#1a1500'];
-const DIR_LABELS  = { up:'↑ Unten→Oben', down:'↓ Oben→Unten', left:'← Rechts→Links', right:'→ Links→Rechts', 'diag-ul':'↖ Diagonal OL', 'diag-ur':'↗ Diagonal OR', 'diag-dl':'↙ Diagonal UL', 'diag-dr':'↘ Diagonal UR' };
+const S='tp_';
+const TC=['#f0efe8','#ffffff','#e8ff47','#ff6b35','#00ffcc','#000000'];
+const BC=['#000000','#0e0e0f','#1a1a1d','#ffffff','#f5f5f0','#0a0a20'];
+let texts=[],selIdx=0;
 
-let texts = [], presets = [], selTextIdx = 0, selPresetIdx = -1;
-
-/* ── Storage helpers ── */
-function getGlobal()  { return JSON.parse(localStorage.getItem(STORE+'global')   || '{}'); }
-function getPresets() { return JSON.parse(localStorage.getItem(STORE+'presets')  || '[]'); }
-function getTexts()   { return JSON.parse(localStorage.getItem(STORE+'texts')    || '[]'); }
-
-function saveGlobal() {
-  const g = {
-    font:      document.getElementById('settFont').value,
-    size:      +document.getElementById('settSize').value,
-    weight:    document.getElementById('settWeight').value,
-    align:     document.getElementById('settAlign').value,
-    pad:       +document.getElementById('settPad').value,
-    mirror:    document.getElementById('settMirror').checked,
-    textColor: activeColor('colorSwatches') || '#f0efe8',
-    bgColor:   activeColor('bgSwatches')    || '#000000',
+function getG(){return JSON.parse(localStorage.getItem(S+'global')||'{}')}
+function saveGlobal(){
+  const g={
+    mode:    document.getElementById('sDir') ? (document.getElementById('modeScroll').classList.contains('on')?'scroll':'display') : getG().mode||'scroll',
+    dir:     document.getElementById('sDir').value,
+    speed:   +document.getElementById('sSpeed').value,
+    lineH:   +(document.getElementById('sLineH').value/10).toFixed(1),
+    keepText:document.getElementById('sKeep').checked,
+    mirror:  document.getElementById('sMirror').checked,
+    font:    document.getElementById('sFont').value,
+    size:    +document.getElementById('sSize').value,
+    weight:  document.getElementById('sWeight').value,
+    align:   document.getElementById('sAlign').value,
+    pad:     +document.getElementById('sPad').value,
+    fade:    +parseFloat(document.getElementById('sFade').value).toFixed(1),
+    textColor:activeColor('colorSwatches')||'#f0efe8',
+    bgColor:  activeColor('bgSwatches')||'#000000',
   };
-  localStorage.setItem(STORE+'global', JSON.stringify(g));
-  broadcast({ type: 'global', data: g });
+  localStorage.setItem(S+'global',JSON.stringify(g));
+  broadcast({type:'global',data:g});
 }
-
-function savePresets() {
-  localStorage.setItem(STORE+'presets', JSON.stringify(presets));
-  broadcast({ type: 'presets', data: presets });
+function setMode(m){
+  document.getElementById('modeScroll').classList.toggle('on',m==='scroll');
+  document.getElementById('modeDisplay').classList.toggle('on',m==='display');
+  saveGlobal();
 }
-
-function saveTexts() {
-  localStorage.setItem(STORE+'texts', JSON.stringify(texts));
-  broadcast({ type: 'texts', data: texts });
+function setScheme(s){
+  if(s==='wob'){setActiveColor('colorSwatches','#f0efe8');setActiveColor('bgSwatches','#000000');}
+  else{setActiveColor('colorSwatches','#000000');setActiveColor('bgSwatches','#ffffff');}
+  saveGlobal();
 }
-
-function broadcast(msg) {
-  localStorage.setItem(STORE+'msg', JSON.stringify({ ...msg, ts: Date.now() }));
+function setActiveColor(id,col){
+  document.querySelectorAll('#'+id+' .cs').forEach(x=>{x.classList.toggle('sel',x.dataset.c===col);});
 }
-
-/* ── Global visual UI ── */
-function loadGlobalUI() {
-  const g = getGlobal();
-  const set = (id, v) => { if (v !== undefined && document.getElementById(id)) document.getElementById(id).value = v; };
-  if (g.font)   set('settFont', g.font);
-  if (g.size)   { set('settSize', g.size);   document.getElementById('sizeVal').textContent  = g.size  + 'px'; }
-  if (g.weight) set('settWeight', g.weight);
-  if (g.align)  set('settAlign', g.align);
-  if (g.pad !== undefined) { set('settPad', g.pad); document.getElementById('padVal').textContent = g.pad + 'px'; }
-  if (g.mirror !== undefined) document.getElementById('settMirror').checked = g.mirror;
+function loadGlobalUI(){
+  const g=getG();
+  const sv=(id,v)=>{if(v!==undefined&&document.getElementById(id))document.getElementById(id).value=v};
+  setMode(g.mode||'scroll');
+  sv('sDir',g.dir);
+  if(g.speed){sv('sSpeed',g.speed);document.getElementById('sSpeedVal').textContent=g.speed+' px/s';}
+  if(g.lineH){sv('sLineH',g.lineH*10);document.getElementById('sLineHVal').textContent=parseFloat(g.lineH).toFixed(1);}
+  if(g.keepText!==undefined)document.getElementById('sKeep').checked=g.keepText;
+  if(g.mirror!==undefined)document.getElementById('sMirror').checked=g.mirror;
+  sv('sFont',g.font);sv('sWeight',g.weight);sv('sAlign',g.align);
+  if(g.size){sv('sSize',g.size);document.getElementById('sSizeVal').textContent=g.size+'px';}
+  if(g.pad!==undefined){sv('sPad',g.pad);document.getElementById('sPadVal').textContent=g.pad+'px';}
+  if(g.fade){sv('sFade',g.fade);document.getElementById('sFadeVal').textContent=g.fade+'s';}
 }
-
-function activeColor(id) {
-  const el = document.querySelector('#' + id + ' .color-swatch.sel');
-  return el ? el.dataset.c : null;
-}
-function buildSwatches(id, colors, key, def) {
-  const cont = document.getElementById(id);
-  cont.innerHTML = '';
-  const cur = getGlobal()[key] || def;
-  colors.forEach(c => {
-    const d = document.createElement('div');
-    d.className = 'color-swatch' + (c === cur ? ' sel' : '');
-    d.style.background = c;
-    d.style.outline = c === '#000000' ? '1px solid #444' : '';
-    d.dataset.c = c;
-    d.title = c;
-    d.onclick = () => { cont.querySelectorAll('.color-swatch').forEach(x => x.classList.remove('sel')); d.classList.add('sel'); saveGlobal(); };
-    cont.appendChild(d);
+function activeColor(id){const e=document.querySelector('#'+id+' .cs.sel');return e?e.dataset.c:null;}
+function buildSwatches(id,colors,key,def){
+  const c=document.getElementById(id);c.innerHTML='';
+  const cur=getG()[key]||def;
+  colors.forEach(col=>{
+    const d=document.createElement('div');
+    d.className='cs'+(col===cur?' sel':'');
+    d.style.background=col;
+    d.style.outline=(col==='#000000'||col==='#0e0e0f'||col==='#1a1a1d')?'1px solid #444':'';
+    d.dataset.c=col;d.title=col;
+    d.onclick=()=>{c.querySelectorAll('.cs').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');saveGlobal();};
+    c.appendChild(d);
   });
 }
-
-/* ── Preset library ── */
-function defaultPreset(n) {
-  return { id: Date.now() + Math.random(), name: n || 'Neues Preset', dir: 'up', speed: 60, lineH: 1.6, keepText: false };
-}
-function presetDesc(p) {
-  return `${DIR_LABELS[p.dir]||p.dir} · ${p.speed}px/s · ${parseFloat(p.lineH).toFixed(1)} · ${p.keepText ? 'bleibt' : 'verschwindet'}`;
-}
-
-function renderPresetList() {
-  const el = document.getElementById('presetList');
-  el.innerHTML = '';
-  if (presets.length === 0) {
-    el.innerHTML = '<p style="font-size:0.72rem;color:var(--muted);font-family:var(--font-mono);padding:0.3rem 0;">Noch keine Presets.</p>';
-    return;
-  }
-  presets.forEach((p, i) => {
-    const d = document.createElement('div');
-    d.className = 'preset-item' + (i === selPresetIdx ? ' active' : '');
-    d.innerHTML = `<span class="preset-name">${p.name}</span><span class="preset-desc">${presetDesc(p)}</span>`;
-    d.onclick = () => selectPreset(i);
-    el.appendChild(d);
-  });
-  // also refresh preset dropdowns in text list & editor
-  rebuildPresetDropdowns();
-}
-
-function selectPreset(i) {
-  selPresetIdx = i;
-  renderPresetList();
-  renderPresetEditor();
-}
-
-function renderPresetEditor() {
-  const el = document.getElementById('presetEditor');
-  if (selPresetIdx < 0 || selPresetIdx >= presets.length) {
-    el.innerHTML = '<p style="font-size:0.75rem;color:var(--muted);font-family:var(--font-mono);">Kein Preset ausgewählt.</p>';
-    return;
-  }
-  const p = presets[selPresetIdx];
-  el.innerHTML = `
-    <label style="margin-top:0;">Name</label>
-    <input type="text" id="pName" value="${escHtml(p.name)}" oninput="savePresetEdit()">
-
-    <label>Richtung</label>
-    <select id="pDir" onchange="savePresetEdit()">
-      ${Object.entries(DIR_LABELS).map(([v,l]) => `<option value="${v}"${p.dir===v?' selected':''}>${l}</option>`).join('')}
-    </select>
-
-    <label>Geschwindigkeit</label>
-    <div class="range-row">
-      <input type="range" id="pSpeed" min="10" max="300" step="5" value="${p.speed}"
-        oninput="savePresetEdit();document.getElementById('pSpeedVal').textContent=this.value+' px/s'">
-      <span class="range-val" id="pSpeedVal">${p.speed} px/s</span>
-    </div>
-
-    <label>Zeilenabstand</label>
-    <div class="range-row">
-      <input type="range" id="pLineH" min="10" max="30" step="1" value="${Math.round(p.lineH*10)}"
-        oninput="savePresetEdit();document.getElementById('pLineHVal').textContent=(this.value/10).toFixed(1)">
-      <span class="range-val" id="pLineHVal">${parseFloat(p.lineH).toFixed(1)}</span>
-    </div>
-
-    <div class="toggle-row">
-      <label class="toggle"><input type="checkbox" id="pKeep" onchange="savePresetEdit()" ${p.keepText?'checked':''}><span class="toggle-slider"></span></label>
-      <span class="toggle-label">Vergangener Text bleibt sichtbar</span>
-    </div>
-  `;
-}
-
-function savePresetEdit() {
-  if (selPresetIdx < 0 || selPresetIdx >= presets.length) return;
-  const p = presets[selPresetIdx];
-  p.name     = document.getElementById('pName').value;
-  p.dir      = document.getElementById('pDir').value;
-  p.speed    = +document.getElementById('pSpeed').value;
-  p.lineH    = +(document.getElementById('pLineH').value / 10).toFixed(1);
-  p.keepText = document.getElementById('pKeep').checked;
-  savePresets();
-  renderPresetList();
-  // keep editor open (don't re-render editor, user is typing)
-  rebuildPresetDropdowns();
-}
-
-function addPreset() {
-  presets.push(defaultPreset(`Preset ${presets.length + 1}`));
-  savePresets();
-  selectPreset(presets.length - 1);
-}
-
-function duplicatePreset() {
-  if (selPresetIdx < 0 || selPresetIdx >= presets.length) return;
-  const copy = { ...presets[selPresetIdx], id: Date.now(), name: presets[selPresetIdx].name + ' (Kopie)' };
-  presets.push(copy);
-  savePresets();
-  selectPreset(presets.length - 1);
-}
-
-function deletePreset() {
-  if (selPresetIdx < 0 || selPresetIdx >= presets.length) return;
-  const pid = presets[selPresetIdx].id;
-  if (!confirm(`Preset "${presets[selPresetIdx].name}" löschen?`)) return;
-  presets.splice(selPresetIdx, 1);
-  // Remove from any text that used it
-  texts.forEach(t => { if (t.presetId === pid) t.presetId = null; });
-  saveTexts();
-  selPresetIdx = Math.min(selPresetIdx, presets.length - 1);
-  savePresets();
-  renderPresetList();
-  renderPresetEditor();
-  renderTextList();
-}
-
-function rebuildPresetDropdowns() {
-  // Update the text-editor dropdown
-  const sel = document.getElementById('editPreset');
-  if (!sel) return;
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">— Globale Einstellungen —</option>';
-  presets.forEach(p => {
-    const opt = document.createElement('option');
-    opt.value = p.id;
-    opt.textContent = p.name;
-    sel.appendChild(opt);
-  });
-  sel.value = cur;
-}
-
-/* ── Text list ── */
-function renderTextList() {
-  const el = document.getElementById('textList');
-  el.innerHTML = '';
-  texts.forEach((t, i) => {
-    const p = t.presetId ? presets.find(x => String(x.id) === String(t.presetId)) : null;
-    const d = document.createElement('div');
-    d.className = 'text-item' + (i === selTextIdx ? ' active' : '');
-    d.innerHTML = `
-      <span class="text-num">${String(i+1).padStart(2,'0')}</span>
-      <span class="text-title">${t.title || '(kein Titel)'}</span>
-      <span class="text-preset-badge ${p ? 'assigned' : ''}">${p ? p.name : 'global'}</span>`;
-    d.onclick = () => selectText(i);
+function saveTexts(){localStorage.setItem(S+'texts',JSON.stringify(texts));broadcast({type:'texts',data:texts});}
+function broadcast(msg){localStorage.setItem(S+'msg',JSON.stringify({...msg,ts:Date.now()}));}
+function renderList(){
+  const el=document.getElementById('textList');el.innerHTML='';
+  texts.forEach((t,i)=>{
+    const d=document.createElement('div');
+    d.className='ti'+(i===selIdx?' sel':'');
+    const spd=t.speed?t.speed+' px/s':'';
+    d.innerHTML=`<span class="tnum">${String(i+1).padStart(2,'0')}</span><span class="ttitle">${t.title||'(kein Titel)'}</span><span class="tspeed">${spd}</span>`;
+    d.onclick=()=>selectText(i);
     el.appendChild(d);
   });
 }
-
-function selectText(i) {
-  if (i < 0 || i >= texts.length) return;
-  selTextIdx = i;
-  renderTextList();
-  const t = texts[i];
-  document.getElementById('editTitle').value   = t.title   || '';
-  document.getElementById('editContent').value = t.content || '';
-  rebuildPresetDropdowns();
-  document.getElementById('editPreset').value = t.presetId ? String(t.presetId) : '';
-  updateEditInfo();
+function selectText(i){
+  if(i<0||i>=texts.length)return;
+  selIdx=i;renderList();
+  const t=texts[i];
+  document.getElementById('eTitle').value=t.title||'';
+  document.getElementById('eContent').value=t.content||'';
+  const spd=t.speed||getG().speed||60;
+  document.getElementById('eSpeed').value=spd;
+  document.getElementById('eSpeedVal').textContent=spd+' px/s';
+  const dur=t.duration||5;
+  document.getElementById('eDur').value=dur;
+  document.getElementById('eDurVal').textContent=parseFloat(dur).toFixed(1)+'s';
+  updateInfo();
 }
-
-function updateEditInfo() {
-  const words = (document.getElementById('editContent').value || '').split(/\s+/).filter(Boolean).length;
-  document.getElementById('editInfo').innerHTML =
-    `Text <span>${selTextIdx + 1} / ${texts.length}</span> &nbsp;·&nbsp; <span>${words}</span> Wörter`;
+function updateInfo(){
+  const w=(document.getElementById('eContent').value||'').split(/\s+/).filter(Boolean).length;
+  document.getElementById('eInfo').innerHTML=`Text <span>${selIdx+1} / ${texts.length}</span> &nbsp;·&nbsp; <span>${w}</span> Wörter`;
 }
-
-function saveEdit() {
-  if (selTextIdx < 0 || selTextIdx >= texts.length) return;
-  texts[selTextIdx].title    = document.getElementById('editTitle').value;
-  texts[selTextIdx].content  = document.getElementById('editContent').value;
-  const pVal = document.getElementById('editPreset').value;
-  texts[selTextIdx].presetId = pVal || null;
-  saveTexts();
-  renderTextList();
-  updateEditInfo();
+function saveEdit(){
+  if(selIdx<0||selIdx>=texts.length)return;
+  texts[selIdx].title=document.getElementById('eTitle').value;
+  texts[selIdx].content=document.getElementById('eContent').value;
+  texts[selIdx].speed=+document.getElementById('eSpeed').value;
+  texts[selIdx].duration=+parseFloat(document.getElementById('eDur').value).toFixed(1);
+  saveTexts();renderList();updateInfo();
 }
-
-function addText() {
-  texts.push({ id: Date.now(), title: `Text ${texts.length + 1}`, content: '', status: 'waiting', presetId: null });
-  saveTexts(); renderTextList(); selectText(texts.length - 1);
+function addText(){texts.push({id:Date.now(),title:`Text ${texts.length+1}`,content:'',status:'waiting',speed:null,duration:5});saveTexts();renderList();selectText(texts.length-1);}
+function delText(){
+  if(texts.length<=1)return;
+  if(!confirm(`"${texts[selIdx].title}" löschen?`))return;
+  texts.splice(selIdx,1);selIdx=Math.min(selIdx,texts.length-1);saveTexts();renderList();selectText(selIdx);
 }
-function deleteText() {
-  if (texts.length <= 1) return;
-  if (!confirm(`"${texts[selTextIdx].title}" wirklich löschen?`)) return;
-  texts.splice(selTextIdx, 1);
-  selTextIdx = Math.min(selTextIdx, texts.length - 1);
-  saveTexts(); renderTextList(); selectText(selTextIdx);
+function moveUp(){if(selIdx<=0)return;[texts[selIdx-1],texts[selIdx]]=[texts[selIdx],texts[selIdx-1]];selIdx--;saveTexts();renderList();selectText(selIdx);}
+function moveDown(){if(selIdx>=texts.length-1)return;[texts[selIdx],texts[selIdx+1]]=[texts[selIdx+1],texts[selIdx]];selIdx++;saveTexts();renderList();selectText(selIdx);}
+function exportData(){
+  const b=new Blob([JSON.stringify({texts,global:getG()},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='teleprompter-daten.json';a.click();
 }
-function moveUp() {
-  if (selTextIdx <= 0) return;
-  [texts[selTextIdx-1], texts[selTextIdx]] = [texts[selTextIdx], texts[selTextIdx-1]];
-  selTextIdx--; saveTexts(); renderTextList(); selectText(selTextIdx);
+function importData(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(d.texts){texts=d.texts;saveTexts();}
+      if(d.global){localStorage.setItem(S+'global',JSON.stringify(d.global));loadGlobalUI();buildSwatches('colorSwatches',TC,'textColor','#f0efe8');buildSwatches('bgSwatches',BC,'bgColor','#000000');}
+      renderList();selectText(0);
+    }catch(err){alert('Fehler: '+err.message);}
+  };r.readAsText(f);
 }
-function moveDown() {
-  if (selTextIdx >= texts.length - 1) return;
-  [texts[selTextIdx], texts[selTextIdx+1]] = [texts[selTextIdx+1], texts[selTextIdx]];
-  selTextIdx++; saveTexts(); renderTextList(); selectText(selTextIdx);
+function initDefaults(){
+  texts=Array.from({length:20},(_,i)=>({id:Date.now()+i,title:`Text ${i+1}`,content:`Platzhalter für Text ${i+1}.\n\nBitte ersetzen.`,status:'waiting',speed:null,duration:5}));
+  saveTexts();renderList();selectText(0);
 }
-
-/* ── Export / Import ── */
-function exportData() {
-  const blob = new Blob([JSON.stringify({ texts, presets, global: getGlobal() }, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'teleprompter-daten.json'; a.click();
-}
-function importData(e) {
-  const f = e.target.files[0]; if (!f) return;
-  const r = new FileReader();
-  r.onload = ev => {
-    try {
-      const d = JSON.parse(ev.target.result);
-      if (d.texts)   { texts   = d.texts;   saveTexts(); }
-      if (d.presets) { presets = d.presets; savePresets(); }
-      if (d.global)  { localStorage.setItem(STORE+'global', JSON.stringify(d.global)); loadGlobalUI(); buildSwatches('colorSwatches', TEXT_COLORS, 'textColor', '#f0efe8'); buildSwatches('bgSwatches', BG_COLORS, 'bgColor', '#000000'); }
-      renderPresetList(); renderTextList(); selectText(0);
-    } catch(err) { alert('Fehler beim Importieren: ' + err.message); }
-  };
-  r.readAsText(f);
-}
-function initDefaults() {
-  texts = Array.from({ length: 20 }, (_, i) => ({ id: Date.now()+i, title: `Text ${i+1}`, content: `Platzhalter für Text ${i+1}.\n\nBitte ersetzen.`, status: 'waiting', presetId: null }));
-  presets = [
-    defaultPreset('Langsam klassisch'),
-    { ...defaultPreset('Schnell links'), dir: 'left', speed: 120 },
-    { ...defaultPreset('Diagonal'), dir: 'diag-ur', speed: 80, lineH: 1.8 },
-  ];
-  presets[0].speed = 40;
-  saveTexts(); savePresets();
-  renderPresetList(); renderTextList(); selectText(0);
-}
-
-function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-/* ── Init ── */
-function init() {
-  const rawTexts   = localStorage.getItem(STORE+'texts');
-  const rawPresets = localStorage.getItem(STORE+'presets');
-  texts   = rawTexts   ? JSON.parse(rawTexts)   : null;
-  presets = rawPresets ? JSON.parse(rawPresets)  : null;
-  if (!texts || !presets) initDefaults();
-  else { renderPresetList(); renderTextList(); selectText(0); }
+function init(){
+  const raw=localStorage.getItem(S+'texts');
+  texts=raw?JSON.parse(raw):null;
+  if(!texts)initDefaults();else{renderList();selectText(0);}
   loadGlobalUI();
-  buildSwatches('colorSwatches', TEXT_COLORS, 'textColor', '#f0efe8');
-  buildSwatches('bgSwatches',    BG_COLORS,   'bgColor',   '#000000');
-  if (!getGlobal().font) saveGlobal();
+  buildSwatches('colorSwatches',TC,'textColor','#f0efe8');
+  buildSwatches('bgSwatches',BC,'bgColor','#000000');
+  if(!getG().font)saveGlobal();
 }
 init();
 </script>
