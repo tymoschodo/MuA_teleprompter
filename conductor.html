@@ -13,7 +13,8 @@
     <span class="pill idle" id="pill">BEREIT</span>
     <span style="font-family:var(--mono);font-size:.6rem;color:var(--mu);margin-left:.5rem" id="idxDisp">—</span>
     <span style="margin-left:auto;font-family:var(--mono);font-size:.58rem;color:var(--mu)">→ projection-front.html</span>
-    <a class="btn btn-sm btn-ac" href="projection-front.html" target="_blank" style="margin-left:.5rem">▶ Projektion</a>
+    <a class="btn btn-sm" href="conductor-perform.html" target="_blank" style="margin-left:.5rem;border-color:var(--ac);color:var(--ac)">⊕ Performance</a>
+    <a class="btn btn-sm btn-ac" href="projection-front.html" target="_blank" style="margin-left:.3rem">▶ Projektion</a>
   </div>
 
   <!-- Sidebar -->
@@ -53,6 +54,8 @@
       <h2>Text bearbeiten</h2>
       <label>Titel</label>
       <input type="text" id="eTitle" placeholder="z.B. Arie I — Liebe" oninput="saveEdit()">
+      <label>Cue (Taktnummer / Kommentar)</label>
+      <input type="text" id="eCue" placeholder="z.B. T.42 — nach dem Akkord" oninput="saveEdit()" style="font-size:.8rem">
       <label>Inhalt</label>
       <textarea id="eContent" rows="5" placeholder="Text hier eingeben…" oninput="saveEdit()"></textarea>
       <div class="two-col" style="margin-top:.75rem">
@@ -216,8 +219,8 @@
 initPanel({
   namespace:    "tp_front_",
   projectionUrl:"projection-front.html",
-  defaultBg:    "#000000",
-  defaultColor: "#f0efe8",
+  defaultBg:    "#ffffff",
+  defaultColor: "#000000",
   defaultMode:  "scroll",
   label:        "Dirigent"
 });

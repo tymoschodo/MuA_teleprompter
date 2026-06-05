@@ -100,9 +100,10 @@ function initPanel(opts) {
       const cls = isCur ? 'active' : t.status==='done' ? 'done' : 'waiting';
       const icon = isCur ? (state==='running'?'►':state==='paused'?'⏸':'·') : t.status==='done'?'✓':'';
       const spd = t.speed ? t.speed+'px/s' : '';
+      const cueNote = t.cue ? `<span class="tspd" style="color:var(--ac2);opacity:.7;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.cue}</span>` : '';
       const d = document.createElement('div');
       d.className = 'ti' + (i===selIdx?' sel':'') + ' ' + cls;
-      d.innerHTML = `<span class="tnum">${String(i+1).padStart(2,'0')}</span><span class="ttitle">${t.title||'(kein Titel)'}</span><span class="tspd">${spd}</span><span class="ticon">${icon}</span>`;
+      d.innerHTML = `<span class="tnum">${String(i+1).padStart(2,'0')}</span><span class="ttitle">${t.title||'(kein Titel)'}</span>${cueNote}<span class="tspd">${spd}</span><span class="ticon">${icon}</span>`;
       d.onclick = () => selectText(i);
       el.appendChild(d);
     });
@@ -114,6 +115,7 @@ function initPanel(opts) {
     selIdx=i; renderList();
     const t=texts[i];
     document.getElementById('eTitle').value=t.title||'';
+    if(document.getElementById('eCue')) document.getElementById('eCue').value=t.cue||'';
     document.getElementById('eContent').value=t.content||'';
     const spd=t.speed||getG().speed||60;
     document.getElementById('eSpeed').value=spd;
@@ -132,6 +134,7 @@ function initPanel(opts) {
   window.saveEdit = function() {
     if(selIdx<0||selIdx>=texts.length)return;
     texts[selIdx].title    = document.getElementById('eTitle').value;
+    if(document.getElementById('eCue')) texts[selIdx].cue = document.getElementById('eCue').value;
     texts[selIdx].content  = document.getElementById('eContent').value;
     texts[selIdx].speed    = +document.getElementById('eSpeed').value;
     texts[selIdx].duration = +parseFloat(document.getElementById('eDur').value).toFixed(1);
@@ -139,7 +142,7 @@ function initPanel(opts) {
   };
 
   window.addText = function() {
-    texts.push({id:Date.now(),title:`Text ${texts.length+1}`,content:'',status:'waiting',speed:null,duration:null});
+    texts.push({id:Date.now(),title:`Text ${texts.length+1}`,cue:'',content:'',status:'waiting',speed:null,duration:null});
     saveTexts(); renderList(); selectText(texts.length-1);
   };
   window.delText = function() {
