@@ -6,220 +6,191 @@
 <link rel="stylesheet" href="panel.css">
 </head><body>
 <div class="page">
-
-  <!-- Top bar -->
-  <div class="topbar">
-    <h1 style="color:#ff6b35">Titel-Operator</h1>
-    <span class="pill idle" id="pill">BEREIT</span>
-    <span style="font-family:var(--mono);font-size:.6rem;color:var(--mu);margin-left:.5rem" id="idxDisp">—</span>
-    <span style="margin-left:auto;font-family:var(--mono);font-size:.58rem;color:var(--mu)">→ projection-back.html</span>
-    <a class="btn btn-sm btn-ac" href="projection-back.html" target="_blank" style="margin-left:.5rem">▶ Projektion</a>
+<div class="topbar">
+  <h1 style="color:#ff6b35">Titel-Operator</h1>
+  <span class="pill idle" id="pill">BEREIT</span>
+  <span style="font-family:var(--mono);font-size:.58rem;color:var(--mu)" id="idxDisp">—</span>
+  <span style="margin-left:auto"></span>
+  
+  <a class="btn btn-sm btn-ac" href="projection-back.html" target="_blank">▶ Projektion</a>
+</div>
+<div class="sidebar">
+  <div class="cue-panel">
+    <div class="prog-lbl">Aktueller Text</div>
+    <div class="prog-title" id="curTitle">—</div>
+    <div class="prog-bar"><div class="prog-fill" id="fill"></div></div>
+    <div class="prog-meta">
+      <div class="prog-pct" id="pct">0%</div>
+      <div class="prog-sub" id="sub">0:00<br>0 / 0</div>
+    </div>
+    <div class="cue-btns">
+      <button class="btn btn-back"  id="btnBack"  onclick="doBack()"  disabled>◀</button>
+      <button class="btn btn-cue"   id="btnCue"   onclick="doCue()">▶ CUE</button>
+      <button class="btn btn-pause" id="btnPause" onclick="doPause()" disabled>⏸</button>
+      <button class="btn btn-stop"  id="btnStop"  onclick="doStop()"  disabled>⏹</button>
+    </div>
   </div>
-
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <!-- Cue controls -->
-    <div class="cue-panel">
-      <div class="prog-lbl">Aktueller Text</div>
-      <div class="prog-title" id="curTitle">—</div>
-      <div class="prog-bar"><div class="prog-fill" id="fill"></div></div>
-      <div class="prog-meta">
-        <div class="prog-pct" id="pct">0%</div>
-        <div class="prog-sub" id="sub">0:00<br>0 / 0 Wörter</div>
-      </div>
-      <div class="cue-btns">
-        <button class="btn btn-back" id="btnBack" onclick="doBack()" disabled>◀</button>
-        <button class="btn btn-cue"  id="btnCue"  onclick="doCue()">▶ CUE</button>
-        <button class="btn btn-pause" id="btnPause" onclick="doPause()" disabled>⏸</button>
-        <button class="btn btn-stop"  id="btnStop"  onclick="doStop()"  disabled>⏹</button>
-      </div>
-    </div>
-    <!-- Text list -->
-    <div class="list-wrap" id="textList"></div>
-    <div class="list-btns">
-      <button class="btn btn-sm" onclick="addText()">+ Neu</button>
-      <button class="btn btn-sm btn-dn" onclick="delText()">Löschen</button>
-      <button class="btn btn-sm" onclick="moveUp()">↑</button>
-      <button class="btn btn-sm" onclick="moveDown()">↓</button>
-    </div>
-    <div class="hint">Leertaste/Pedal → CUE &nbsp;·&nbsp; ← / Backspace → Zurück</div>
+  <div class="list-wrap" id="textList"></div>
+  <div class="list-btns">
+    <button class="btn btn-sm" onclick="addText()">+ Neu</button>
+    <button class="btn btn-sm btn-dn" onclick="delText()">Löschen</button>
+    <button class="btn btn-sm" onclick="moveUp()">↑</button>
+    <button class="btn btn-sm" onclick="moveDown()">↓</button>
   </div>
-
-  <!-- Main: editor + settings -->
-  <div class="main">
-
-    <!-- Text editor -->
-    <div class="section">
-      <h2>Text bearbeiten</h2>
-      <label>Titel</label>
-      <input type="text" id="eTitle" placeholder="z.B. Arie I — Liebe" oninput="saveEdit()">
-      <label>Inhalt</label>
-      <textarea id="eContent" rows="5" placeholder="Text hier eingeben…" oninput="saveEdit()"></textarea>
-      <div class="two-col" style="margin-top:.75rem">
-        <div>
-          <label style="margin-top:0">Geschwindigkeit (nur dieser Text)</label>
-          <div class="rrow">
-            <input type="range" id="eSpeed" min="10" max="300" step="5" value="60"
-              oninput="saveEdit();document.getElementById(&apos;eSpeedVal&apos;).textContent=this.value+&apos; px/s&apos;">
-            <span class="rval" id="eSpeedVal">60 px/s</span>
-          </div>
-        </div>
-        <div>
-          <label style="margin-top:0">Anzeigedauer (Display-Modus)</label>
-          <div class="rrow">
-            <input type="range" id="eDur" min="1" max="30" step="0.5" value="5"
-              oninput="saveEdit();document.getElementById(&apos;eDurVal&apos;).textContent=parseFloat(this.value).toFixed(1)+&apos;s&apos;">
-            <span class="rval" id="eDurVal">5.0s</span>
-          </div>
+  <div class="hint">Leertaste/Pedal → CUE &nbsp;·&nbsp; ←/Backspace → Zurück</div>
+</div>
+<div class="main">
+  <div class="section">
+    <h2>Text bearbeiten</h2>
+    <label>Titel</label>
+    <input type="text" id="eTitle" placeholder="z.B. Arie I" oninput="saveEdit()">
+    <label>Cue (Taktnummer / Kommentar)</label>
+    <input type="text" id="eCue" placeholder="z.B. T.42 — nach dem Akkord" oninput="saveEdit()">
+    <label>Inhalt</label>
+    <textarea id="eContent" rows="5" placeholder="Text hier eingeben…" oninput="saveEdit()"></textarea>
+    <div class="two-col" style="margin-top:.7rem">
+      <div>
+        <label style="margin-top:0">Geschwindigkeit (nur dieser Text)</label>
+        <div class="rrow">
+          <input type="range" id="eSpeed" min="10" max="300" step="5" value="60" oninput="saveEdit();document.getElementById('eSpeedVal').textContent=this.value+' px/s'">
+          <span class="rval" id="eSpeedVal">60 px/s</span>
         </div>
       </div>
-      <div class="info" id="eInfo">Kein Text ausgewählt</div>
-    </div>
-
-    <!-- Cue & display settings -->
-    <div class="section">
-      <h2>Anzeigemodus &amp; Bewegung</h2>
-      <label style="margin-top:0">Modus</label>
-      <div class="mode-tabs">
-        <button class="mtab" id="modeScroll" onclick="setMode(&apos;scroll&apos;)">Scroll</button>
-        <button class="mtab" id="modeDisplay" onclick="setMode(&apos;display&apos;)">Display</button>
-      </div>
-      <div class="two-col">
-        <div>
-          <label style="margin-top:0">Richtung (Scroll)</label>
-          <select id="sDir" onchange="saveGlobal()">
-            <option value="up">↑ Unten → Oben</option>
-            <option value="down">↓ Oben → Unten</option>
-            <option value="left">← Rechts → Links</option>
-            <option value="right">→ Links → Rechts</option>
-            <option value="diag-ul">↖ Diagonal OL</option>
-            <option value="diag-ur">↗ Diagonal OR</option>
-            <option value="diag-dl">↙ Diagonal UL</option>
-            <option value="diag-dr">↘ Diagonal UR</option>
-          </select>
-          <label>Standardgeschwindigkeit</label>
-          <div class="rrow">
-            <input type="range" id="sSpeed" min="10" max="300" step="5" value="60"
-              oninput="saveGlobal();document.getElementById(&apos;sSpeedVal&apos;).textContent=this.value+&apos; px/s&apos;">
-            <span class="rval" id="sSpeedVal">60 px/s</span>
-          </div>
-        </div>
-        <div>
-          <label style="margin-top:0">Einblenddauer (Display)</label>
-          <div class="rrow">
-            <input type="range" id="sFade" min="0.1" max="3" step="0.1" value="0.5"
-              oninput="saveGlobal();document.getElementById(&apos;sFadeVal&apos;).textContent=parseFloat(this.value).toFixed(1)+&apos;s&apos;">
-            <span class="rval" id="sFadeVal">0.5s</span>
-          </div>
-          <label>Standard-Anzeigedauer</label>
-          <div class="rrow">
-            <input type="range" id="sDuration" min="1" max="30" step="0.5" value="5"
-              oninput="saveGlobal();document.getElementById(&apos;sDurationVal&apos;).textContent=parseFloat(this.value).toFixed(1)+&apos;s&apos;">
-            <span class="rval" id="sDurationVal">5.0s</span>
-          </div>
-        </div>
-      </div>
-      <div class="trow">
-        <label class="tog"><input type="checkbox" id="sKeep" onchange="saveGlobal()"><span class="tslide"></span></label>
-        <span class="tlbl">Vergangener Text bleibt sichtbar</span>
-      </div>
-      <div class="trow">
-        <label class="tog"><input type="checkbox" id="sMirror" onchange="saveGlobal()"><span class="tslide"></span></label>
-        <span class="tlbl">Text horizontal spiegeln</span>
-      </div>
-    </div>
-
-    <!-- Visual settings -->
-    <div class="section">
-      <h2>Erscheinungsbild</h2>
-      <label style="margin-top:0">Schnellwahl</label>
-      <div class="bw-row">
-        <button class="bw-btn wob" onclick="setScheme(&apos;wob&apos;)">Weiß auf Schwarz</button>
-        <button class="bw-btn bow" onclick="setScheme(&apos;bow&apos;)">Schwarz auf Weiß</button>
-      </div>
-      <label>Textfarbe</label><div class="crow" id="colorSwatches"></div>
-      <label>Hintergrundfarbe</label><div class="crow" id="bgSwatches"></div>
-      <div class="three-col" style="margin-top:.85rem">
-        <div>
-          <label style="margin-top:0">Schriftart</label>
-          <select id="sFont" onchange="saveGlobal()">
-            <option value="&apos;Syne&apos;,sans-serif">Syne</option>
-            <option value="&apos;Julius Sans One&apos;,sans-serif">Julius Sans One</option>
-            <option value="&apos;Hiragino Sans W0&apos;,sans-serif">Hiragino W0</option>
-            <option value="&apos;Hiragino Sans W1&apos;,sans-serif">Hiragino W1</option>
-            <option value="&apos;Hiragino Sans W2&apos;,sans-serif">Hiragino W2</option>
-            <option value="&apos;Hiragino Sans W3&apos;,sans-serif">Hiragino W3</option>
-            <option value="&apos;Hiragino Sans W4&apos;,sans-serif">Hiragino W4</option>
-            <option value="&apos;Hiragino Sans W5&apos;,sans-serif">Hiragino W5</option>
-            <option value="&apos;Hiragino Sans W6&apos;,sans-serif">Hiragino W6</option>
-            <option value="&apos;Hiragino Sans W7&apos;,sans-serif">Hiragino W7</option>
-            <option value="&apos;Hiragino Sans W8&apos;,sans-serif">Hiragino W8</option>
-            <option value="&apos;Hiragino Sans W9&apos;,sans-serif">Hiragino W9</option>
-            <option value="&apos;Space Mono&apos;,monospace">Space Mono</option>
-            <option value="Georgia,serif">Georgia</option>
-            <option value="&apos;Helvetica Neue&apos;,sans-serif">Helvetica Neue</option>
-            <option value="&apos;Arial&apos;,sans-serif">Arial</option>
-          </select>
-          <label>Schriftgewicht</label>
-          <select id="sWeight" onchange="saveGlobal()">
-            <option value="100">100 Thin</option><option value="200">200 ExtraLight</option>
-            <option value="300">300 Light</option><option value="400">400 Regular</option>
-            <option value="500">500 Medium</option><option value="600">600 SemiBold</option>
-            <option value="700" selected>700 Bold</option><option value="800">800 ExtraBold</option>
-            <option value="900">900 Black</option>
-          </select>
-        </div>
-        <div>
-          <label style="margin-top:0">Schriftgröße</label>
-          <div class="rrow">
-            <input type="range" id="sSize" min="24" max="200" step="2" value="72"
-              oninput="saveGlobal();document.getElementById(&apos;sSizeVal&apos;).textContent=this.value+&apos;px&apos;">
-            <span class="rval" id="sSizeVal">72px</span>
-          </div>
-          <label>Zeilenabstand</label>
-          <div class="rrow">
-            <input type="range" id="sLineH" min="10" max="30" step="1" value="16"
-              oninput="saveGlobal();document.getElementById(&apos;sLineHVal&apos;).textContent=(this.value/10).toFixed(1)">
-            <span class="rval" id="sLineHVal">1.6</span>
-          </div>
-          <label>Ausrichtung</label>
-          <select id="sAlign" onchange="saveGlobal()">
-            <option value="left">Linksbündig</option>
-            <option value="center">Zentriert</option>
-            <option value="right">Rechtsbündig</option>
-          </select>
-        </div>
-        <div>
-          <label style="margin-top:0">Seitenränder</label>
-          <div class="rrow">
-            <input type="range" id="sPad" min="0" max="300" step="10" value="80"
-              oninput="saveGlobal();document.getElementById(&apos;sPadVal&apos;).textContent=this.value+&apos;px&apos;">
-            <span class="rval" id="sPadVal">80px</span>
-          </div>
+      <div>
+        <label style="margin-top:0">Anzeigedauer (Display-Modus)</label>
+        <div class="rrow">
+          <input type="range" id="eDur" min="1" max="30" step="0.5" value="5" oninput="saveEdit();document.getElementById('eDurVal').textContent=parseFloat(this.value).toFixed(1)+'s'">
+          <span class="rval" id="eDurVal">5.0s</span>
         </div>
       </div>
     </div>
-
-    <!-- Data -->
-    <div class="section" style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
-      <h2 style="margin:0">Daten:</h2>
-      <button class="btn btn-sm" onclick="exportData()">↓ Export</button>
-      <button class="btn btn-sm" onclick="document.getElementById(&apos;iFile&apos;).click()">↑ Import</button>
-      <input type="file" id="iFile" accept=".json" style="display:none" onchange="importData(event)">
-      <button class="btn btn-sm btn-dn" onclick="if(confirm(&apos;Zurücksetzen?&apos;))initDefaults()">↺ Reset</button>
+    <div class="info" id="eInfo">Kein Text ausgewählt</div>
+  </div>
+  <div class="section">
+    <h2>Anzeigemodus &amp; Bewegung</h2>
+    <label style="margin-top:0">Modus</label>
+    <div class="mode-tabs">
+      <button class="mtab" id="modeScroll" onclick="setMode('scroll')">Scroll</button>
+      <button class="mtab" id="modeDisplay" onclick="setMode('display')">Display</button>
     </div>
-
-  </div><!-- .main -->
-</div><!-- .page -->
+    <div class="two-col">
+      <div>
+        <label style="margin-top:0">Richtung (Scroll)</label>
+        <select id="sDir" onchange="saveGlobal()">
+          <option value="up">↑ Unten → Oben</option>
+          <option value="down">↓ Oben → Unten</option>
+          <option value="left">← Rechts → Links</option>
+          <option value="right">→ Links → Rechts</option>
+          <option value="diag-ul">↖ Diagonal OL</option>
+          <option value="diag-ur">↗ Diagonal OR</option>
+          <option value="diag-dl">↙ Diagonal UL</option>
+          <option value="diag-dr">↘ Diagonal UR</option>
+        </select>
+        <label>Standardgeschwindigkeit</label>
+        <div class="rrow">
+          <input type="range" id="sSpeed" min="10" max="300" step="5" value="60" oninput="saveGlobal();document.getElementById('sSpeedVal').textContent=this.value+' px/s'">
+          <span class="rval" id="sSpeedVal">60 px/s</span>
+        </div>
+      </div>
+      <div>
+        <label style="margin-top:0">Einblenddauer (Display)</label>
+        <div class="rrow">
+          <input type="range" id="sFade" min="0.1" max="3" step="0.1" value="0.5" oninput="saveGlobal();document.getElementById('sFadeVal').textContent=parseFloat(this.value).toFixed(1)+'s'">
+          <span class="rval" id="sFadeVal">0.5s</span>
+        </div>
+        <label>Standard-Anzeigedauer</label>
+        <div class="rrow">
+          <input type="range" id="sDuration" min="1" max="30" step="0.5" value="5" oninput="saveGlobal();document.getElementById('sDurationVal').textContent=parseFloat(this.value).toFixed(1)+'s'">
+          <span class="rval" id="sDurationVal">5.0s</span>
+        </div>
+      </div>
+    </div>
+    <div class="trow">
+      <label class="tog"><input type="checkbox" id="sKeep" onchange="saveGlobal()"><span class="tslide"></span></label>
+      <span class="tlbl">Vergangener Text bleibt sichtbar</span>
+    </div>
+    <div class="trow">
+      <label class="tog"><input type="checkbox" id="sMirror" onchange="saveGlobal()"><span class="tslide"></span></label>
+      <span class="tlbl">Text horizontal spiegeln</span>
+    </div>
+  </div>
+  <div class="section">
+    <h2>Erscheinungsbild</h2>
+    <label style="margin-top:0">Schnellwahl</label>
+    <div class="bw-row">
+      <button class="bw-btn wob" onclick="setScheme('wob')">Weiß auf Schwarz</button>
+      <button class="bw-btn bow" onclick="setScheme('bow')">Schwarz auf Weiß</button>
+    </div>
+    <label>Textfarbe</label><div class="crow" id="colorSwatches"></div>
+    <label>Hintergrundfarbe</label><div class="crow" id="bgSwatches"></div>
+    <div class="three-col" style="margin-top:.85rem">
+      <div>
+        <label style="margin-top:0">Schriftart</label>
+        <select id="sFont" onchange="saveGlobal()">
+          <option value="'Syne',sans-serif">Syne</option>
+          <option value="'Julius Sans One',sans-serif">Julius Sans One</option>
+          <option value="'Hiragino Sans W0',sans-serif">Hiragino W0</option>
+          <option value="'Hiragino Sans W1',sans-serif">Hiragino W1</option>
+          <option value="'Hiragino Sans W2',sans-serif">Hiragino W2</option>
+          <option value="'Hiragino Sans W3',sans-serif">Hiragino W3</option>
+          <option value="'Hiragino Sans W4',sans-serif">Hiragino W4</option>
+          <option value="'Hiragino Sans W5',sans-serif">Hiragino W5</option>
+          <option value="'Hiragino Sans W6',sans-serif">Hiragino W6</option>
+          <option value="'Hiragino Sans W7',sans-serif">Hiragino W7</option>
+          <option value="'Hiragino Sans W8',sans-serif">Hiragino W8</option>
+          <option value="'Hiragino Sans W9',sans-serif">Hiragino W9</option>
+          <option value="'Space Mono',monospace">Space Mono</option>
+          <option value="Georgia,serif">Georgia</option>
+          <option value="'Helvetica Neue',sans-serif">Helvetica Neue</option>
+          <option value="'Arial',sans-serif">Arial</option>
+        </select>
+        <label>Schriftgewicht</label>
+        <select id="sWeight" onchange="saveGlobal()">
+          <option value="100">100 Thin</option><option value="200">200 ExtraLight</option>
+          <option value="300">300 Light</option><option value="400">400 Regular</option>
+          <option value="500">500 Medium</option><option value="600">600 SemiBold</option>
+          <option value="700" selected>700 Bold</option><option value="800">800 ExtraBold</option>
+          <option value="900">900 Black</option>
+        </select>
+      </div>
+      <div>
+        <label style="margin-top:0">Schriftgröße</label>
+        <div class="rrow">
+          <input type="range" id="sSize" min="24" max="200" step="2" value="72" oninput="saveGlobal();document.getElementById('sSizeVal').textContent=this.value+'px'">
+          <span class="rval" id="sSizeVal">72px</span>
+        </div>
+        <label>Zeilenabstand</label>
+        <div class="rrow">
+          <input type="range" id="sLineH" min="10" max="30" step="1" value="16" oninput="saveGlobal();document.getElementById('sLineHVal').textContent=(this.value/10).toFixed(1)">
+          <span class="rval" id="sLineHVal">1.6</span>
+        </div>
+        <label>Ausrichtung</label>
+        <select id="sAlign" onchange="saveGlobal()">
+          <option value="left">Linksbündig</option>
+          <option value="center">Zentriert</option>
+          <option value="right">Rechtsbündig</option>
+        </select>
+      </div>
+      <div>
+        <label style="margin-top:0">Seitenränder</label>
+        <div class="rrow">
+          <input type="range" id="sPad" min="0" max="300" step="10" value="80" oninput="saveGlobal();document.getElementById('sPadVal').textContent=this.value+'px'">
+          <span class="rval" id="sPadVal">80px</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="section" style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
+    <h2 style="margin:0">Daten:</h2>
+    <button class="btn btn-sm" onclick="exportData()">↓ Export</button>
+    <button class="btn btn-sm" onclick="document.getElementById('iFile').click()">↑ Import</button>
+    <input type="file" id="iFile" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="btn btn-sm btn-dn" onclick="if(confirm('Zurücksetzen?'))initDefaults()">↺ Reset</button>
+  </div>
+</div>
+</div>
 <script src="control-panel.js"></script>
 <script>
-initPanel({
-  namespace:    "tp_back_",
-  projectionUrl:"projection-back.html",
-  defaultBg:    "#000000",
-  defaultColor: "#f0efe8",
-  defaultMode:  "display",
-  label:        "Titel-Operator"
-});
+initPanel({ namespace:"tp_back_", projectionUrl:"projection-back.html", defaultBg:"#000000", defaultColor:"#f0efe8", defaultMode:"display", label:"Titel-Operator" });
 </script>
 </body></html>

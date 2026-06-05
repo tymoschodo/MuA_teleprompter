@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Dirigent — Performance</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080809;--sf:#111114;--sf2:#1a1a1e;--bd:#252528;--ac:#e8ff47;--ac2:#ff6b35;--tx:#f0efe8;--mu:#555;--dn:#ff4444;--fm:'Syne',sans-serif;--mono:'Space Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-family:var(--fm)}
+.layout{display:grid;grid-template-rows:auto 1fr auto;grid-template-columns:1fr 320px;height:100vh}
+.topbar{grid-column:1/-1;display:flex;align-items:center;gap:1rem;padding:.7rem 1.5rem;border-bottom:1px solid var(--bd);background:var(--bg)}
+.topbar-title{font-size:.8rem;font-weight:800;letter-spacing:.08em;color:var(--ac)}
+.pill{font-family:var(--mono);font-size:.6rem;padding:.18rem .5rem;border-radius:3px;border:1px solid var(--bd);letter-spacing:.04em}
+.idle{color:var(--mu);border-color:var(--bd)}.running{color:var(--ac2);border-color:var(--ac2);animation:blink 1.2s ease infinite}.paused{color:var(--ac);border-color:var(--ac)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.back-link{margin-left:auto;font-family:var(--mono);font-size:.62rem;color:var(--mu);text-decoration:none;border:1px solid var(--bd);padding:.22rem .65rem;border-radius:4px;transition:all .15s}
+.back-link:hover{color:var(--tx);border-color:var(--mu)}
+.stage{grid-row:2/3;grid-column:1/2;display:flex;flex-direction:column;padding:2rem 2.5rem;border-right:1px solid var(--bd);overflow:hidden}
+.cur-label{font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu);margin-bottom:.45rem}
+.cur-cue{font-family:var(--mono);font-size:.78rem;color:var(--ac2);letter-spacing:.04em;margin-bottom:.55rem;min-height:1.1rem}
+.cur-title{font-size:clamp(1.6rem,4vw,3rem);font-weight:800;letter-spacing:-.02em;line-height:1.1;margin-bottom:1.4rem;flex-shrink:0}
+.prog-wrap{margin-bottom:2rem;flex-shrink:0}
+.prog-bar{height:8px;background:var(--sf2);border-radius:4px;overflow:hidden;margin-bottom:.5rem}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--ac),var(--ac2));border-radius:4px;transition:width .35s ease;width:0%}
+.prog-meta{display:flex;justify-content:space-between;align-items:baseline}
+.prog-pct{font-family:var(--mono);font-size:2.2rem;font-weight:700;color:var(--ac);line-height:1}
+.prog-sub{font-family:var(--mono);font-size:.65rem;color:var(--mu);text-align:right;line-height:1.6}
+.next-block{margin-top:auto;padding:1rem 1.2rem;background:var(--sf);border:1px solid var(--bd);border-radius:6px;flex-shrink:0}
+.next-label{font-size:.56rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu);margin-bottom:.32rem}
+.next-cue{font-family:var(--mono);font-size:.7rem;color:var(--ac2);margin-bottom:.22rem;min-height:.9rem}
+.next-title{font-size:1rem;font-weight:700;color:rgba(240,239,232,.45)}
+.controls{grid-row:3/4;grid-column:1/2;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.6rem;padding:1rem 2.5rem 1.5rem;border-top:1px solid var(--bd);border-right:1px solid var(--bd);background:var(--bg)}
+.btn{font-family:var(--fm);font-weight:800;font-size:.9rem;padding:.9rem .5rem;border-radius:6px;border:2px solid var(--bd);background:var(--sf2);color:var(--tx);cursor:pointer;transition:all .12s;text-align:center;touch-action:manipulation}
+.btn:active{transform:scale(.96)}.btn:disabled{opacity:.2;cursor:default;transform:none}
+.btn-back{border-color:#3a3a3a;color:#888;font-size:.82rem}
+.btn-cue{background:var(--ac);color:#080809;border-color:var(--ac);grid-column:span 2;font-size:1.1rem}
+.btn-cue:not(:disabled):active{background:#cde83f}
+.btn-pause{border-color:var(--ac2);color:var(--ac2)}
+.btn-stop{border-color:var(--dn);color:var(--dn)}
+.cuelist{grid-row:2/4;grid-column:2/3;display:flex;flex-direction:column;overflow:hidden;background:var(--sf)}
+.cuelist-header{padding:.72rem 1rem;border-bottom:1px solid var(--bd);font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu);flex-shrink:0}
+.cuelist-scroll{flex:1;overflow-y:auto;padding:.45rem .55rem}
+.cuelist-scroll::-webkit-scrollbar{width:3px}.cuelist-scroll::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px}
+.ci{padding:.6rem .8rem;border-radius:5px;border:1px solid transparent;margin-bottom:.28rem;cursor:pointer;transition:all .18s;display:flex;flex-direction:column;gap:.18rem}
+.ci:hover{background:var(--sf2);border-color:var(--bd)}
+.ci.waiting{opacity:.32}.ci.active{border-color:var(--ac2)!important;background:rgba(255,107,53,.1);opacity:1}.ci.done{border-color:rgba(68,221,136,.18);background:rgba(68,221,136,.03);opacity:.5}
+.ci-row{display:flex;align-items:center;gap:.5rem}
+.ci-num{font-family:var(--mono);font-size:.56rem;color:var(--mu);min-width:1.3rem;flex-shrink:0}
+.ci-title{font-size:.78rem;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ci-icon{font-size:.68rem;flex-shrink:0}
+.ci-cue{font-family:var(--mono);font-size:.58rem;color:var(--ac2);padding-left:1.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hint{text-align:center;padding:.42rem;font-family:var(--mono);font-size:.54rem;color:var(--mu);border-top:1px solid var(--bd);flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="topbar">
+    <span class="topbar-title">DIRIGENT — PERFORMANCE</span>
+    <span class="pill idle" id="pill">BEREIT</span>
+    <span style="font-family:var(--mono);font-size:.58rem;color:var(--mu)" id="idxDisp">—</span>
+    <a class="back-link" href="conductor.html">← Einstellungen</a>
+  </div>
+  <div class="stage">
+    <div class="cur-label">Aktuell</div>
+    <div class="cur-cue"   id="curCue">—</div>
+    <div class="cur-title" id="curTitle">Bereit</div>
+    <div class="prog-wrap">
+      <div class="prog-bar"><div class="prog-fill" id="fill"></div></div>
+      <div class="prog-meta">
+        <div class="prog-pct" id="pct">—</div>
+        <div class="prog-sub" id="sub"></div>
+      </div>
+    </div>
+    <div class="next-block">
+      <div class="next-label">Nächster Cue</div>
+      <div class="next-cue"   id="nextCue">—</div>
+      <div class="next-title" id="nextTitle">—</div>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="btn btn-back"  id="btnBack"  onclick="doBack()"  disabled>◀ Zurück</button>
+    <button class="btn btn-cue"   id="btnCue"   onclick="doCue()">▶ CUE</button>
+    <button class="btn btn-pause" id="btnPause" onclick="doPause()" disabled>⏸</button>
+    <button class="btn btn-stop"  id="btnStop"  onclick="doStop()"  disabled>⏹</button>
+  </div>
+  <div class="cuelist">
+    <div class="cuelist-header">Alle Cues</div>
+    <div class="cuelist-scroll" id="cueList"></div>
+    <div class="hint">Klicken = direkt starten</div>
+  </div>
+</div>
+<script>
+const S='tp_front_';
+let texts=[],curIdx=-1,state='idle';
+let progInt=null,startTime=0,totalDur=0,totalWords=0,pausedElapsed=0;
+
+function getG(){return JSON.parse(localStorage.getItem(S+'global')||'{}')}
+function broadcast(msg){localStorage.setItem(S+'msg',JSON.stringify({...msg,ts:Date.now()}))}
+function loadTexts(){const r=localStorage.getItem(S+'texts');texts=r?JSON.parse(r):[];renderList();updateNext();}
+
+function renderList(){
+  const el=document.getElementById('cueList');el.innerHTML='';
+  texts.forEach((t,i)=>{
+    const cls=i===curIdx?'active':t.status==='done'?'done':'waiting';
+    const icon=i===curIdx?(state==='running'?'►':state==='paused'?'⏸':'·'):t.status==='done'?'✓':'';
+    const d=document.createElement('div');
+    d.className='ci '+cls;
+    d.innerHTML=`<div class="ci-row"><span class="ci-num">${String(i+1).padStart(2,'0')}</span><span class="ci-title">${t.title||'(kein Titel)'}</span><span class="ci-icon">${icon}</span></div>${t.cue?`<div class="ci-cue">↳ ${t.cue}</div>`:''}`;
+    d.onclick=()=>jumpTo(i);
+    el.appendChild(d);
+  });
+  if(curIdx>=0){const items=el.querySelectorAll('.ci');if(items[curIdx])items[curIdx].scrollIntoView({block:'nearest',behavior:'smooth'});}
+}
+
+function updateNext(){
+  const n=texts[curIdx+1];
+  document.getElementById('nextTitle').textContent=n?(n.title||'(kein Titel)'):'— Ende —';
+  document.getElementById('nextCue').textContent=n?(n.cue||''):'';
+}
+
+function setState(s){
+  state=s;
+  const pill=document.getElementById('pill');
+  const map={idle:['BEREIT','idle'],running:['LÄUFT','running'],paused:['PAUSE','paused']};
+  const [txt,cls]=map[s];pill.textContent=txt;pill.className='pill '+cls;
+  document.getElementById('btnCue').disabled=(s==='running');
+  document.getElementById('btnPause').disabled=(s==='idle');
+  document.getElementById('btnStop').disabled=(s==='idle');
+  document.getElementById('btnBack').disabled=(s==='running'||curIdx<=0);
+}
+
+function activateText(idx){
+  if(curIdx>=0&&texts[curIdx])texts[curIdx].status='done';
+  curIdx=idx;texts[curIdx].status='active';
+  const t=texts[curIdx];
+  document.getElementById('curTitle').textContent=t.title||'(kein Titel)';
+  document.getElementById('curCue').textContent=t.cue||'';
+  document.getElementById('idxDisp').textContent=(curIdx+1)+' / '+texts.length;
+  totalWords=(t.content||'').split(/\s+/).filter(Boolean).length;
+  pausedElapsed=0;resetProg();updateNext();
+}
+
+function doCue(){
+  if(state==='running')return;
+  const next=curIdx+1;
+  if(next>=texts.length){alert('Alle '+texts.length+' Cues gezeigt!');return;}
+  activateText(next);setState('running');broadcast({type:'cue',idx:curIdx});startProg();renderList();
+}
+function doBack(){
+  if(state==='running'||curIdx<=0)return;
+  if(curIdx>=0&&texts[curIdx])texts[curIdx].status='waiting';
+  const prev=curIdx-1;curIdx=prev-1;
+  activateText(prev);setState('running');broadcast({type:'cue',idx:curIdx});startProg();renderList();
+}
+function jumpTo(idx){
+  if(state==='running'){if(!confirm('Cue wechseln während läuft?'))return;clearInterval(progInt);}
+  texts.forEach((t,i)=>{t.status=i<idx?'done':'waiting';});
+  curIdx=idx-1;activateText(idx);setState('running');
+  broadcast({type:'cue',idx:curIdx});startProg();renderList();
+}
+function doPause(){
+  if(state==='running'){clearInterval(progInt);pausedElapsed+=Date.now()-startTime;setState('paused');broadcast({type:'pause'});}
+  else if(state==='paused'){startTime=Date.now();startProg();setState('running');broadcast({type:'resume'});}
+  renderList();
+}
+function doStop(){
+  clearInterval(progInt);
+  if(curIdx>=0&&texts[curIdx])texts[curIdx].status='waiting';
+  setState('idle');resetProg();broadcast({type:'stop'});renderList();
+}
+function resetProg(){
+  document.getElementById('fill').style.width='0%';
+  document.getElementById('pct').textContent='0%';
+  document.getElementById('sub').innerHTML='';
+}
+function startProg(){
+  clearInterval(progInt);
+  const g=getG(),t=texts[curIdx];if(!t)return;
+  const mode=g.mode||'scroll',speed=t.speed||g.speed||60,size=g.size||72,lineH=g.lineH||1.6;
+  const dur=(t.duration||g.duration||5)*1000;
+  startTime=Date.now();
+  progInt=setInterval(()=>{
+    const el=pausedElapsed+(Date.now()-startTime);
+    const total=mode==='display'?dur:(()=>{const lines=(t.content||'').split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length/28)),0);return(lines*(size*lineH)/speed)*1000;})();
+    const p=Math.min(100,Math.round((el/total)*100));
+    document.getElementById('fill').style.width=p+'%';
+    document.getElementById('pct').textContent=p+'%';
+    const sec=Math.floor(el/1000),m=Math.floor(sec/60),ss=sec%60;
+    document.getElementById('sub').innerHTML=`${m}:${ss<10?'0':''}${ss}&nbsp;&nbsp;${Math.round(p/100*totalWords)} / ${totalWords}`;
+    if(p>=100){clearInterval(progInt);setState('idle');if(texts[curIdx])texts[curIdx].status='done';renderList();}
+  },200);
+}
+
+window.addEventListener('storage',e=>{
+  if(e.key===S+'texts'){texts=JSON.parse(e.newValue||'[]');renderList();updateNext();}
+});
+document.addEventListener('keydown',e=>{
+  if(e.code==='Space'||e.code==='Enter'||e.code==='ArrowRight'){e.preventDefault();if(state!=='running')doCue();}
+  if(e.code==='Backspace'||e.code==='ArrowLeft'){e.preventDefault();if(state!=='running')doBack();}
+});
+
+loadTexts();setState('idle');
+</script>
+</body></html>

@@ -7,33 +7,34 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#0e0e0f;color:#f0efe8;font-family:'Syne',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;gap:2rem}
 h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;color:#e8ff47}
-p{font-family:'Space Mono',monospace;font-size:.75rem;color:#666;margin-top:.3rem}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;width:100%;max-width:700px}
-.card{background:#1a1a1d;border:1px solid #2e2e33;border-radius:8px;padding:1.5rem;display:flex;flex-direction:column;gap:.75rem}
-.card h2{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
-.card h2.front{color:#e8ff47}.card h2.back{color:#ff6b35}
-.card p{font-family:'Space Mono',monospace;font-size:.72rem;color:#666;line-height:1.6}
-.btn{font-family:'Syne',sans-serif;font-size:.85rem;font-weight:700;padding:.65rem 1.1rem;border-radius:6px;border:1.5px solid #2e2e33;background:#242428;color:#f0efe8;cursor:pointer;text-decoration:none;display:block;text-align:center;transition:all .15s}
+p{font-family:'Space Mono',monospace;font-size:.75rem;color:#555;margin-top:.3rem}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;width:100%;max-width:720px}
+.card{background:#1a1a1d;border:1px solid #2e2e33;border-radius:8px;padding:1.5rem;display:flex;flex-direction:column;gap:.65rem}
+.card h2{font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.front{color:#e8ff47}.back{color:#ff6b35}
+.card p{font-family:'Space Mono',monospace;font-size:.7rem;color:#555;line-height:1.6}
+.btn{font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;padding:.62rem 1rem;border-radius:6px;border:1.5px solid #2e2e33;background:#242428;color:#f0efe8;cursor:pointer;text-decoration:none;display:block;text-align:center;transition:all .15s}
 .btn:hover{border-color:#888;color:#fff}
-.btn-front{background:#e8ff47;color:#0e0e0f;border-color:#e8ff47}.btn-front:hover{background:#fff;border-color:#fff;color:#0e0e0f}
-.btn-back{background:#ff6b35;color:#0e0e0f;border-color:#ff6b35}.btn-back:hover{background:#fff;border-color:#fff;color:#0e0e0f}
+.btn-f{background:#e8ff47;color:#0e0e0f;border-color:#e8ff47}.btn-f:hover{background:#fff;border-color:#fff;color:#0e0e0f}
+.btn-b{background:#ff6b35;color:#0e0e0f;border-color:#ff6b35}.btn-b:hover{background:#fff;border-color:#fff;color:#0e0e0f}
+.btn-perf{border-color:#e8ff47;color:#e8ff47}.btn-perf:hover{background:#e8ff47;color:#0e0e0f}
 </style>
 </head><body>
 <div><h1>TELEPROMPTER</h1><p>MuA — Zwei unabhängige Systeme</p></div>
 <div class="grid">
   <div class="card">
     <h2 class="front">⊞ Dirigent / Vorne</h2>
-    <p>Steuerung für den Dirigenten.<br>Texte für den Schauspieler.<br>Scroll-Modus Standard.<br>Schwarz auf Weiß.</p>
-    <a class="btn btn-front" href="conductor.html" target="_blank">Dirigent — Einstellungen</a>
-    <a class="btn" href="conductor-perform.html" target="_blank" style="border-color:#e8ff47;color:#e8ff47">⊕ Performance-Modus</a>
-    <a class="btn" href="projection-front.html" target="_blank">Projektion Vorne</a>
+    <p>Texte für den Schauspieler.<br>Schwarz auf Weiß. Scroll-Modus.</p>
+    <a class="btn btn-f" href="conductor.html" target="_blank">Dirigent — Einstellungen</a>
+    <a class="btn btn-perf" href="conductor-perform.html" target="_blank">⊕ Performance-Modus</a>
+    <a class="btn" href="projection-front.html" target="_blank">▶ Projektion Vorne</a>
   </div>
   <div class="card">
     <h2 class="back">⊞ Titel-Operator / Hinten</h2>
-    <p>Steuerung für den Titel-Operator.<br>Titel-Karten für das Publikum.<br>Display-Modus Standard.<br>Weiß auf Schwarz.</p>
-    <a class="btn btn-back" href="titles.html" target="_blank">Titel-Operator öffnen</a>
-    <a class="btn" href="projection-back.html" target="_blank">Projektion Hinten</a>
+    <p>Titel-Karten für das Publikum.<br>Weiß auf Schwarz. Display-Modus.</p>
+    <a class="btn btn-b" href="titles.html" target="_blank">Titel-Operator — Einstellungen</a>
+    <a class="btn" href="projection-back.html" target="_blank">▶ Projektion Hinten</a>
   </div>
 </div>
-<p style="font-family:'Space Mono',monospace;font-size:.62rem;color:#444">Alle vier Fenster können gleichzeitig geöffnet sein · F = Vollbild in den Projektionsfenstern</p>
+<p style="font-family:'Space Mono',monospace;font-size:.6rem;color:#333">F = Vollbild in den Projektionsfenstern &nbsp;·&nbsp; Leertaste/Pedal = CUE &nbsp;·&nbsp; ← = Zurück</p>
 </body></html>
