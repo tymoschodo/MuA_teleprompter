@@ -75,6 +75,7 @@ function initProjection(opts) {
   function clearAll() {
     if(displayTimeout){clearTimeout(displayTimeout);displayTimeout=null;}
     if(animId){cancelAnimationFrame(animId);animId=null;}
+    animWorker.postMessage('stop');
   }
 
   function startText(idx) {
@@ -125,12 +126,30 @@ function initProjection(opts) {
     }
   }
 
+  // Web Worker clock — runs at full speed even in background tabs
+  const workerBlob = new Blob([`
+    let iv = null;
+    self.onmessage = function(e) {
+      if (e.data === 'start') {
+        if (iv) clearInterval(iv);
+        iv = setInterval(() => self.postMessage('tick'), 16);
+      } else if (e.data === 'stop') {
+        clearInterval(iv); iv = null;
+      }
+    };
+  `], { type: 'application/javascript' });
+  const animWorker = new Worker(URL.createObjectURL(workerBlob));
+  animWorker.onmessage = function() {
+    if (paused || stopped) { animWorker.postMessage('stop'); return; }
+    const t = Math.min((performance.now() - animStart) / animDuration, 1);
+    const x = startPos.x + (endPos.x - startPos.x) * t;
+    const y = startPos.y + (endPos.y - startPos.y) * t;
+    wrap.style.transform = `translate(${x}px,${y}px)`;
+    if (t >= 1) { stopped = true; animWorker.postMessage('stop'); }
+  };
+
   function animate() {
-    if(paused||stopped)return;
-    const t=Math.min((performance.now()-animStart)/animDuration,1);
-    wrap.style.transform=`translate(${startPos.x+(endPos.x-startPos.x)*t}px,${startPos.y+(endPos.y-startPos.y)*t}px)`;
-    if(t<1) animId=requestAnimationFrame(animate);
-    else stopped=true;
+    animWorker.postMessage('start');
   }
 
   function doPause() {
@@ -180,6 +199,7 @@ function initProjection(opts) {
       else document.exitFullscreen();
     }
   });
+
 
   texts=getT();
   const g=getG();
