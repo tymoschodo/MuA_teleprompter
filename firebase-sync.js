@@ -1,5 +1,5 @@
-// Firebase Realtime Database sync
-// Handles cross-device broadcasting for both front (tp_front_) and back (tp_back_) namespaces
+// Firebase Realtime Database sync — eager initialization
+// Uses Firebase CDN modules for cross-device cue broadcasting
 
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyCFkpLg0LFGsuB72VjQAhpPDsYavWI0Jdk",
@@ -11,82 +11,95 @@ const FIREBASE_CONFIG = {
   appId: "1:412190982258:web:3a14c16ef52afab01182eb"
 };
 
-let _db = null;
-let _listeners = {}; // namespace -> callback
+// Queued calls before Firebase is ready
+let _ready = false;
+let _db = null, _ref = null, _set = null, _onValue = null;
+let _queue = [];
 
-async function getDB() {
-  if (_db) return _db;
-  // Load Firebase from CDN
-  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
-  const { getDatabase, ref, set, onValue, off } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js");
-  const app = initializeApp(FIREBASE_CONFIG);
-  _db = { db: getDatabase(app), ref, set, onValue, off };
-  return _db;
+function _drain() {
+  _queue.forEach(fn => fn());
+  _queue = [];
 }
 
-// Broadcast a message to all devices on this namespace
-async function fbBroadcast(namespace, msg) {
+// Eagerly connect on load
+(async function init() {
   try {
-    const { db, ref, set } = await getDB();
-    const path = 'cues/' + namespace.replace(/[^a-zA-Z0-9]/g, '_');
-    await set(ref(db, path), { ...msg, ts: Date.now() });
+    const app_mod  = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+    const db_mod   = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js");
+    // Avoid duplicate app initialization
+    let app;
+    try { app = app_mod.getApp(); }
+    catch(e) { app = app_mod.initializeApp(FIREBASE_CONFIG); }
+    _db      = db_mod.getDatabase(app);
+    _ref     = db_mod.ref;
+    _set     = db_mod.set;
+    _onValue = db_mod.onValue;
+    _ready   = true;
+    console.log('[Firebase] connected');
+    _drain();
   } catch(e) {
-    console.warn('Firebase broadcast failed:', e);
+    console.warn('[Firebase] init failed:', e);
   }
+})();
+
+function whenReady(fn) {
+  if (_ready) fn();
+  else _queue.push(fn);
 }
 
-// Listen for messages on this namespace, call callback(msg) on each
-async function fbListen(namespace, callback) {
-  try {
-    const { db, ref, onValue } = await getDB();
-    const path = 'cues/' + namespace.replace(/[^a-zA-Z0-9]/g, '_');
-    const r = ref(db, path);
-    let lastTs = 0;
-    onValue(r, (snapshot) => {
-      const msg = snapshot.val();
-      if (!msg) return;
-      // Ignore messages older than when we started listening,
-      // and deduplicate (Firebase fires onValue on first attach too)
-      if (msg.ts && msg.ts <= lastTs) return;
-      lastTs = msg.ts || Date.now();
-      // Also write to localStorage so same-device tabs still work
-      localStorage.setItem(namespace + 'msg', JSON.stringify(msg));
-      callback(msg);
+// ── PUBLIC API ──────────────────────────────────────────────────────────────
+
+function fbBroadcast(namespace, msg) {
+  whenReady(async () => {
+    try {
+      const path = 'cues/' + namespace.replace(/[^a-zA-Z0-9_]/g, '_');
+      await _set(_ref(_db, path), { ...msg, ts: Date.now() });
+    } catch(e) { console.warn('[Firebase] broadcast failed:', e); }
+  });
+}
+
+function fbListen(namespace, callback) {
+  whenReady(() => {
+    try {
+      const path = 'cues/' + namespace.replace(/[^a-zA-Z0-9_]/g, '_');
+      let lastTs = Date.now(); // ignore anything older than page load
+      _onValue(_ref(_db, path), (snapshot) => {
+        const msg = snapshot.val();
+        if (!msg || !msg.ts || msg.ts <= lastTs) return;
+        lastTs = msg.ts;
+        // Mirror to localStorage for same-device tabs
+        localStorage.setItem(namespace + 'msg', JSON.stringify(msg));
+        callback(msg);
+      });
+      console.log('[Firebase] listening on', path);
+    } catch(e) { console.warn('[Firebase] listen failed:', e); }
+  });
+}
+
+function fbSyncTexts(namespace, texts) {
+  whenReady(async () => {
+    try {
+      const path = 'texts/' + namespace.replace(/[^a-zA-Z0-9_]/g, '_');
+      await _set(_ref(_db, path), { data: JSON.stringify(texts), ts: Date.now() });
+    } catch(e) { console.warn('[Firebase] syncTexts failed:', e); }
+  });
+}
+
+function fbGetTexts(namespace) {
+  return new Promise((resolve) => {
+    whenReady(() => {
+      try {
+        const path = 'texts/' + namespace.replace(/[^a-zA-Z0-9_]/g, '_');
+        _onValue(_ref(_db, path), (snapshot) => {
+          const val = snapshot.val();
+          resolve((val && val.data) ? JSON.parse(val.data) : null);
+        }, { onlyOnce: true });
+      } catch(e) {
+        console.warn('[Firebase] getTexts failed:', e);
+        resolve(null);
+      }
     });
-    _listeners[namespace] = { ref: r };
-  } catch(e) {
-    console.warn('Firebase listen failed:', e);
-  }
-}
-
-// Broadcast texts to Firebase so all devices have latest
-async function fbSyncTexts(namespace, texts) {
-  try {
-    const { db, ref, set } = await getDB();
-    const path = 'texts/' + namespace.replace(/[^a-zA-Z0-9]/g, '_');
-    await set(ref(db, path), { data: JSON.stringify(texts), ts: Date.now() });
-  } catch(e) {
-    console.warn('Firebase texts sync failed:', e);
-  }
-}
-
-// Fetch latest texts from Firebase
-async function fbGetTexts(namespace) {
-  try {
-    const { db, ref, onValue } = await getDB();
-    return new Promise((resolve) => {
-      const path = 'texts/' + namespace.replace(/[^a-zA-Z0-9]/g, '_');
-      const r = ref(db, path);
-      onValue(r, (snapshot) => {
-        const val = snapshot.val();
-        if (val && val.data) resolve(JSON.parse(val.data));
-        else resolve(null);
-      }, { onlyOnce: true });
-    });
-  } catch(e) {
-    console.warn('Firebase getText failed:', e);
-    return null;
-  }
+  });
 }
 
 window.__fb = { fbBroadcast, fbListen, fbSyncTexts, fbGetTexts };
