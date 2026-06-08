@@ -84,11 +84,13 @@ function initProjection(opts) {
     if(s.mode==='display') {
       wrap.style.transform='translate(0px,0px)';
       requestAnimationFrame(()=>{
+        void wrap.offsetHeight;
         const H=window.innerHeight,th=wrap.offsetHeight;
         wrap.style.transform=`translate(0px,${Math.max(0,(H-th)/2)}px)`;
         wrap.style.opacity='0';
-        requestAnimationFrame(()=>{
-          wrap.style.transition=`opacity ${s.fade}s ease`;
+        wrap.style.transition=`opacity ${s.fade}s ease`;
+        // Small timeout so browser registers opacity:0 before transitioning to 1
+        setTimeout(()=>{
           wrap.style.opacity='1';
           displayTimeout=setTimeout(()=>{
             wrap.style.transition=`opacity ${s.fade}s ease`;
@@ -101,14 +103,17 @@ function initProjection(opts) {
         });
       });
     } else {
+      // Single rAF: force layout, measure, snap to start, begin animation immediately
       requestAnimationFrame(()=>{
+        // Force layout so offsetHeight is correct
+        void wrap.offsetHeight;
         const pair=traj(s);
         startPos=pair[0]; endPos=pair[1];
         wrap.style.transform=`translate(${startPos.x}px,${startPos.y}px)`;
         const dx=endPos.x-startPos.x, dy=endPos.y-startPos.y;
         animDuration=(Math.sqrt(dx*dx+dy*dy)/s.speed)*1000;
         animStart=performance.now();
-        requestAnimationFrame(animate);
+        animate();
       });
     }
   }
