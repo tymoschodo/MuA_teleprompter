@@ -223,10 +223,16 @@ function initPanel(opts) {
     if(e.key===S+'texts'){ texts=JSON.parse(e.newValue||'[]'); renderList(); }
   });
 
-  document.addEventListener('keydown', e => {
-    if(e.code==='Space')                           {e.preventDefault();if(state!=='running')window.doCue();}
-    if(e.code==='Backspace'||e.code==='ArrowLeft') {e.preventDefault();if(state!=='running')window.doBack();}
-  });
+  // Keyboard/pedal cues only for conductor namespace, and only when not typing in a field
+  if (opts.keyboardCues) {
+    document.addEventListener('keydown', e => {
+      const tag = document.activeElement ? document.activeElement.tagName : '';
+      const isTyping = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+      if (isTyping) return;
+      if(e.code==='Space')                           {e.preventDefault();if(state!=='running')window.doCue();}
+      if(e.code==='Backspace'||e.code==='ArrowLeft') {e.preventDefault();if(state!=='running')window.doBack();}
+    });
+  }
 
   window.exportData = function() {
     const b=new Blob([JSON.stringify({texts,global:getG()},null,2)],{type:'application/json'});
