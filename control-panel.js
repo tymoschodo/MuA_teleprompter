@@ -150,7 +150,7 @@ function initPanel(opts) {
       const d = document.createElement('div');
       d.className = 'ti'+(i===selIdx?' sel':'')+' '+cls;
       d.innerHTML = `<span class="tnum">${String(i+1).padStart(2,'0')}</span><span class="ttitle">${t.title||'(kein Titel)'}</span>${cueNote}<span class="ticon">${icon}</span>`;
-      d.onclick = () => selectText(i);
+      d.onclick = () => { if(typeof window.selectCue==='function') window.selectCue(i); else selectText(i); };
       el.appendChild(d);
     });
     if(curCueIdx>=0){const items=el.querySelectorAll('.ti');if(items[curCueIdx])items[curCueIdx].scrollIntoView({block:'nearest',behavior:'smooth'});}
@@ -194,6 +194,17 @@ function initPanel(opts) {
     saveTexts(); renderList(); updateInfo();
   };
 
+  // Select a cue from the list without starting it
+  window.selectCue = function(idx) {
+    if(state==='running') return; // can't change selection while running
+    if(texts[curCueIdx]) texts[curCueIdx].status='waiting';
+    curCueIdx=idx;
+    if(texts[curCueIdx]) texts[curCueIdx].status='waiting';
+    selectText(curCueIdx);
+    setState('idle');
+    renderList();
+  };
+
   window.addText  = function() { texts.push({id:Date.now(),title:`Text ${texts.length+1}`,cue:'',content:'',status:'waiting',speed:null,duration:null}); saveTexts();renderList();selectText(texts.length-1); };
   window.delText  = function() { if(texts.length<=1)return; if(!confirm(`"${texts[selIdx].title}" löschen?`))return; texts.splice(selIdx,1);selIdx=Math.min(selIdx,texts.length-1);saveTexts();renderList();selectText(selIdx); };
   window.moveUp   = function() { if(selIdx<=0)return;[texts[selIdx-1],texts[selIdx]]=[texts[selIdx],texts[selIdx-1]];selIdx--;saveTexts();renderList();selectText(selIdx); };
@@ -202,14 +213,13 @@ function initPanel(opts) {
   // ── CUE CONTROL ────────────────────────────────────────────────────────────
   function setState(s) {
     state=s;
-    const map={idle:['BEREIT','idle'],running:['LÄUFT','running'],paused:['PAUSE','paused']};
-    const [txt,cls]=map[s]||['BEREIT','idle'];
+    const map={idle:['BEREIT','idle'],running:['LÄUFT','running']};
+    const [txt,cls]=(map[s]||['BEREIT','idle']);
     const pill=document.getElementById('pill');
     if(pill){pill.textContent=txt;pill.className='pill '+cls;}
-    const bp=document.getElementById('btnPause'); if(bp) bp.disabled=(s==='idle');
-    const bs=document.getElementById('btnStop');  if(bs) bs.disabled=(s==='idle');
-    const bc=document.getElementById('btnCue');   if(bc) bc.disabled=(s==='running');
-    const bb=document.getElementById('btnBack');  if(bb) bb.disabled=(s==='running'||curCueIdx<=0);
+    const bs=document.getElementById('btnStop'); if(bs) bs.disabled=(s==='idle');
+    const bc=document.getElementById('btnCue');  if(bc) bc.disabled=(s==='running');
+    const bb=document.getElementById('btnBack'); if(bb) bb.disabled=(s==='running');
   }
 
   function activateText(idx) {
@@ -222,10 +232,12 @@ function initPanel(opts) {
   }
 
   window.doCue = function() {
-    if(state==='running')return;
-    const next=curCueIdx+1;
-    if(next>=texts.length){alert('Alle '+texts.length+' Texte gezeigt!');return;}
-    activateText(next); setState('running');
+    if(state==='running') return;
+    // If nothing selected yet, start from first
+    const target = curCueIdx >= 0 ? curCueIdx : 0;
+    if(target >= texts.length) return;
+    activateText(target);
+    setState('running');
     broadcast({type:'cue',idx:curCueIdx});
     startProg(); renderList();
   };
@@ -247,20 +259,7 @@ function initPanel(opts) {
     startProg(); renderList();
   };
 
-  window.doPause = function() {
-    if(state==='running') {
-      clearInterval(progInt);
-      pausedElapsed+=Date.now()-startTime;
-      setState('paused');
-      broadcast({type:'pause'});
-    } else if(state==='paused') {
-      startTime=Date.now();
-      startProg();
-      setState('running');
-      broadcast({type:'resume'});
-    }
-    renderList();
-  };
+  // Pause removed — stop + re-cue workflow instead
 
   window.doStop = function() {
     clearInterval(progInt);

@@ -31,7 +31,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-
 .next-label{font-size:.56rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu);margin-bottom:.32rem}
 .next-cue{font-family:var(--mono);font-size:.7rem;color:var(--ac2);margin-bottom:.22rem;min-height:.9rem}
 .next-title{font-size:1rem;font-weight:700;color:rgba(240,239,232,.45)}
-.controls{grid-row:3/4;grid-column:1/2;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.6rem;padding:1rem 2.5rem 1.5rem;border-top:1px solid var(--bd);border-right:1px solid var(--bd);background:var(--bg)}
+.controls{grid-row:3/4;grid-column:1/2;display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem;padding:1rem 2.5rem 1.5rem;border-top:1px solid var(--bd);border-right:1px solid var(--bd);background:var(--bg)}
 .btn{font-family:var(--fm);font-weight:800;font-size:.9rem;padding:.9rem .5rem;border-radius:6px;border:2px solid var(--bd);background:var(--sf2);color:var(--tx);cursor:pointer;transition:all .12s;text-align:center;touch-action:manipulation}
 .btn:active{transform:scale(.96)}.btn:disabled{opacity:.2;cursor:default;transform:none}
 .btn-back{border-color:#3a3a3a;color:#888;font-size:.82rem}
@@ -81,9 +81,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-
   </div>
   <div class="controls">
     <button class="btn btn-back"  id="btnBack"  onclick="doBack()"  disabled>◀ Zurück</button>
-    <button class="btn btn-cue"   id="btnCue"   onclick="doCue()">▶ CUE</button>
-    <button class="btn btn-pause" id="btnPause" onclick="doPause()" disabled>⏸</button>
-    <button class="btn btn-stop"  id="btnStop"  onclick="doStop()"  disabled>⏹</button>
+    <button class="btn btn-cue"   id="btnCue"   onclick="doCue()" style="grid-column:span 2">▶ CUE</button>
+    <button class="btn btn-stop"  id="btnStop"  onclick="doStop()"  disabled>⏹ Stop</button>
   </div>
   <div class="cuelist">
     <div class="cuelist-header">Alle Cues</div>
@@ -126,13 +125,13 @@ function updateNext(){
 
 function setState(s){
   state=s;
+  const map={idle:['BEREIT','idle'],running:['LÄUFT','running']};
+  const [txt,cls]=(map[s]||['BEREIT','idle']);
   const pill=document.getElementById('pill');
-  const map={idle:['BEREIT','idle'],running:['LÄUFT','running'],paused:['PAUSE','paused']};
-  const [txt,cls]=map[s];pill.textContent=txt;pill.className='pill '+cls;
-  document.getElementById('btnCue').disabled=(s==='running');
-  document.getElementById('btnPause').disabled=(s==='idle');
-  document.getElementById('btnStop').disabled=(s==='idle');
-  document.getElementById('btnBack').disabled=(s==='running'||curIdx<=0);
+  if(pill){pill.textContent=txt;pill.className='pill '+cls;}
+  const bc=document.getElementById('btnCue');  if(bc) bc.disabled=(s==='running');
+  const bs=document.getElementById('btnStop'); if(bs) bs.disabled=(s==='idle');
+  const bb=document.getElementById('btnBack'); if(bb) bb.disabled=(s==='running');
 }
 
 function activateText(idx){
@@ -148,37 +147,44 @@ function activateText(idx){
 
 function doCue(){
   if(state==='running')return;
-  const next=curIdx+1;
-  if(next>=texts.length){alert('Alle '+texts.length+' Cues gezeigt!');return;}
-  activateText(next);setState('running');broadcast({type:'cue',idx:curIdx});startProg();renderList();
-}
-function doBack(){
-  if(state==='running'||curIdx<=0)return;
-  // Reset both current and previous to waiting before re-activating
-  if(curIdx>=0&&texts[curIdx])texts[curIdx].status='waiting';
-  const prev=curIdx-1;
-  if(texts[prev])texts[prev].status='waiting';
-  curIdx=prev-1;
-  activateText(prev);
+  const target=curIdx>=0?curIdx:0;
+  if(target>=texts.length)return;
+  activateText(target);
   setState('running');
   broadcast({type:'cue',idx:curIdx});
   startProg();renderList();
 }
+function doBack(){
+  if(state==='running'||curIdx<=0)return;
+  if(texts[curIdx])texts[curIdx].status='waiting';
+  curIdx--;
+  if(texts[curIdx])texts[curIdx].status='waiting';
+  setState('idle');
+  renderList();updateNext();
+}
 function jumpTo(idx){
-  if(state==='running'){if(!confirm('Cue wechseln während läuft?'))return;clearInterval(progInt);}
+  if(state==='running'){
+    // Stop current first
+    clearInterval(progInt);
+    if(texts[curIdx])texts[curIdx].status='waiting';
+    broadcast({type:'stop'});
+  }
+  // Just select — don't play
   texts.forEach((t,i)=>{t.status=i<idx?'done':'waiting';});
-  curIdx=idx-1;activateText(idx);setState('running');
-  broadcast({type:'cue',idx:curIdx});startProg();renderList();
+  curIdx=idx;
+  if(texts[curIdx])texts[curIdx].status='waiting';
+  setState('idle');
+  resetProg();
+  renderList();updateNext();
 }
-function doPause(){
-  if(state==='running'){clearInterval(progInt);pausedElapsed+=Date.now()-startTime;setState('paused');broadcast({type:'pause'});}
-  else if(state==='paused'){startTime=Date.now();startProg();setState('running');broadcast({type:'resume'});}
-  renderList();
-}
+// pause removed
 function doStop(){
   clearInterval(progInt);
   if(curIdx>=0&&texts[curIdx])texts[curIdx].status='waiting';
-  setState('idle');resetProg();broadcast({type:'stop'});renderList();
+  setState('idle');
+  resetProg();
+  broadcast({type:'stop'});
+  renderList();
 }
 function resetProg(){
   document.getElementById('fill').style.width='0%';
@@ -223,8 +229,9 @@ window.addEventListener('storage',e=>{
   if(e.key===S+'texts'){texts=JSON.parse(e.newValue||'[]');renderList();updateNext();}
 });
 document.addEventListener('keydown',e=>{
-  if(e.code==='Space'||e.code==='Enter'||e.code==='ArrowRight'){e.preventDefault();if(state!=='running')doCue();}
-  if(e.code==='Backspace'||e.code==='ArrowLeft'){e.preventDefault();if(state!=='running')doBack();}
+  if(e.code==='Space'||e.code==='Enter'){e.preventDefault();if(state!=='running')doCue();}
+  if(e.code==='ArrowLeft'||e.code==='Backspace'){e.preventDefault();if(state!=='running')doBack();}
+  if(e.code==='ArrowDown'){e.preventDefault();if(state!=='running'&&curIdx<texts.length-1){if(texts[curIdx])texts[curIdx].status='waiting';curIdx++;if(texts[curIdx])texts[curIdx].status='waiting';setState('idle');renderList();updateNext();}}
 });
 
 loadTexts();setState('idle');
