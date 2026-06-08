@@ -56,15 +56,18 @@ function initProjection(opts) {
 
   function traj(s) {
     const W=window.innerWidth,H=window.innerHeight,tw=wrap.offsetWidth,th=wrap.offsetHeight,k=s.keepText;
+    // When keepText=false, text must scroll fully OFF screen.
+    // End positions use -(th+H) / (W+tw) to guarantee last line clears the edge.
+    const ox=W+tw, oy=th+H; // full off-screen offsets
     const m={
-      'up':     [{x:(W-tw)/2,y:H},        {x:(W-tw)/2,y:k?0:-th}],
-      'down':   [{x:(W-tw)/2,y:-th},       {x:(W-tw)/2,y:k?H-th:H}],
-      'left':   [{x:W,y:(H-th)/2},         {x:k?0:-tw,y:(H-th)/2}],
-      'right':  [{x:-tw,y:(H-th)/2},       {x:k?W-tw:W,y:(H-th)/2}],
-      'diag-ul':[{x:W,y:H},                {x:k?0:-tw,y:k?0:-th}],
-      'diag-ur':[{x:-tw,y:H},              {x:k?W-tw:W,y:k?0:-th}],
-      'diag-dl':[{x:W,y:-th},              {x:k?0:-tw,y:k?H-th:H}],
-      'diag-dr':[{x:-tw,y:-th},            {x:k?W-tw:W,y:k?H-th:H}],
+      'up':     [{x:0,       y:H},    {x:0,       y:k?0:-oy}],
+      'down':   [{x:0,       y:-th},  {x:0,       y:k?H-th:H+oy}],
+      'left':   [{x:W,       y:0},    {x:k?0:-ox, y:0}],
+      'right':  [{x:-tw,     y:0},    {x:k?W-tw:ox,y:0}],
+      'diag-ul':[{x:W,       y:H},    {x:k?0:-ox, y:k?0:-oy}],
+      'diag-ur':[{x:-tw,     y:H},    {x:k?W-tw:ox,y:k?0:-oy}],
+      'diag-dl':[{x:W,       y:-th},  {x:k?0:-ox, y:k?H-th:H+oy}],
+      'diag-dr':[{x:-tw,     y:-th},  {x:k?W-tw:ox,y:k?H-th:H+oy}],
     };
     return m[s.dir]||m['up'];
   }
