@@ -202,13 +202,14 @@ function initPanel(opts) {
   // ── CUE CONTROL ────────────────────────────────────────────────────────────
   function setState(s) {
     state=s;
-    const pill=document.getElementById('pill');
     const map={idle:['BEREIT','idle'],running:['LÄUFT','running'],paused:['PAUSE','paused']};
-    const [txt,cls]=map[s]; pill.textContent=txt; pill.className='pill '+cls;
-    document.getElementById('btnPause').disabled=(s==='idle');
-    document.getElementById('btnStop').disabled=(s==='idle');
-    document.getElementById('btnCue').disabled=(s==='running');
-    document.getElementById('btnBack').disabled=(s==='running'||curCueIdx<=0);
+    const [txt,cls]=map[s]||['BEREIT','idle'];
+    const pill=document.getElementById('pill');
+    if(pill){pill.textContent=txt;pill.className='pill '+cls;}
+    const bp=document.getElementById('btnPause'); if(bp) bp.disabled=(s==='idle');
+    const bs=document.getElementById('btnStop');  if(bs) bs.disabled=(s==='idle');
+    const bc=document.getElementById('btnCue');   if(bc) bc.disabled=(s==='running');
+    const bb=document.getElementById('btnBack');  if(bb) bb.disabled=(s==='running'||curCueIdx<=0);
   }
 
   function activateText(idx) {
@@ -230,24 +231,44 @@ function initPanel(opts) {
   };
 
   window.doBack = function() {
-    if(state==='running'||curCueIdx<=0)return;
+    if(state==='running'||curCueIdx<=0) return;
+    // Reset current text to waiting
     if(curCueIdx>=0&&texts[curCueIdx]) texts[curCueIdx].status='waiting';
-    const prev=curCueIdx-1; curCueIdx=prev-1;
-    activateText(prev); setState('running');
+    // Reset previous text to waiting too (activateText will set it active)
+    const prev=curCueIdx-1;
+    if(texts[prev]) texts[prev].status='waiting';
+    // activateText expects curCueIdx to be the one BEFORE the target
+    // so it can mark it done — but we've already handled status above,
+    // so just set curCueIdx directly and call activateText cleanly
+    curCueIdx=prev-1;
+    activateText(prev);
+    setState('running');
     broadcast({type:'cue',idx:curCueIdx});
     startProg(); renderList();
   };
 
   window.doPause = function() {
-    if(state==='running'){clearInterval(progInt);pausedElapsed+=Date.now()-startTime;setState('paused');broadcast({type:'pause'});}
-    else if(state==='paused'){startTime=Date.now();startProg();setState('running');broadcast({type:'resume'});}
+    if(state==='running') {
+      clearInterval(progInt);
+      pausedElapsed+=Date.now()-startTime;
+      setState('paused');
+      broadcast({type:'pause'});
+    } else if(state==='paused') {
+      startTime=Date.now();
+      startProg();
+      setState('running');
+      broadcast({type:'resume'});
+    }
     renderList();
   };
 
   window.doStop = function() {
     clearInterval(progInt);
     if(curCueIdx>=0&&texts[curCueIdx]) texts[curCueIdx].status='waiting';
-    setState('idle'); resetProg(); broadcast({type:'stop'}); renderList();
+    setState('idle');
+    resetProg();
+    broadcast({type:'stop'});
+    renderList();
   };
 
   function resetProg() {
@@ -264,10 +285,40 @@ function initPanel(opts) {
     const size=g.size||72; const lineH=g.lineH||1.6;
     const dur=(t.duration||g.duration||5)*1000;
     startTime=Date.now();
+    // Total visible duration:
+    // scroll: time from first word on screen to last word off screen = full scroll travel time
+    // display: fade-in + hold + fade-out
+    const g2=getG();
+    const fadeDur = (g2.fade||0.5)*1000;
+    const total = mode==='display'
+      ? fadeDur + dur + fadeDur   // fade in + hold + fade out
+      : (()=>{
+          const lines=(t.content||'').split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length/28)),0);
+          return (lines*(size*lineH)/speed)*1000;
+        })();
+
+    // For scroll mode, delay progress start until text enters screen (first word visible)
+    // Entry time = how long it takes to travel from start pos to y=0 (top of screen)
+    // Approximation: H / speed * 1000 ms before first word is visible
+    const entryDelay = mode==='display' ? 0 : Math.round((window.innerHeight||800)/speed*1000);
+    let progStartTime = null;
+
     const tick = () => {
-      const el=pausedElapsed+(Date.now()-startTime);
-      const total = mode==='display' ? dur : (()=>{const lines=(t.content||'').split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length/28)),0);return(lines*(size*lineH)/speed)*1000;})();
-      const p=Math.min(100,Math.round((el/total)*100));
+      const now = Date.now();
+      // Don't start counting until text has entered the screen
+      if (progStartTime === null) {
+        const elapsed = pausedElapsed + (now - startTime);
+        if (elapsed < entryDelay) {
+          // Still entering — show 0%
+          document.getElementById('fill').style.width='0%';
+          document.getElementById('pct').textContent='0%';
+          document.getElementById('sub').innerHTML='';
+          return;
+        }
+        progStartTime = now - (elapsed - entryDelay);
+      }
+      const el = pausedElapsed + (now - progStartTime);
+      const p = Math.min(100, Math.round((el/total)*100));
       document.getElementById('fill').style.width=p+'%';
       document.getElementById('pct').textContent=p+'%';
       const sec=Math.floor(el/1000),m=Math.floor(sec/60),ss=sec%60;

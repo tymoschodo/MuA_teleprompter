@@ -154,9 +154,15 @@ function doCue(){
 }
 function doBack(){
   if(state==='running'||curIdx<=0)return;
+  // Reset both current and previous to waiting before re-activating
   if(curIdx>=0&&texts[curIdx])texts[curIdx].status='waiting';
-  const prev=curIdx-1;curIdx=prev-1;
-  activateText(prev);setState('running');broadcast({type:'cue',idx:curIdx});startProg();renderList();
+  const prev=curIdx-1;
+  if(texts[prev])texts[prev].status='waiting';
+  curIdx=prev-1;
+  activateText(prev);
+  setState('running');
+  broadcast({type:'cue',idx:curIdx});
+  startProg();renderList();
 }
 function jumpTo(idx){
   if(state==='running'){if(!confirm('Cue wechseln während läuft?'))return;clearInterval(progInt);}
@@ -185,9 +191,25 @@ function startProg(){
   const mode=g.mode||'scroll',speed=t.speed||g.speed||60,size=g.size||72,lineH=g.lineH||1.6;
   const dur=(t.duration||g.duration||5)*1000;
   startTime=Date.now();
+  const fadeDur2=(g.fade||0.5)*1000;
+  const total=mode==='display'
+    ? fadeDur2+dur+fadeDur2
+    : (()=>{const lines=(t.content||'').split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length/28)),0);return(lines*(size*lineH)/speed)*1000;})();
+  const entryDelay2=mode==='display'?0:Math.round((window.innerHeight||800)/speed*1000);
+  let progStartTime2=null;
   progInt=setInterval(()=>{
-    const el=pausedElapsed+(Date.now()-startTime);
-    const total=mode==='display'?dur:(()=>{const lines=(t.content||'').split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length/28)),0);return(lines*(size*lineH)/speed)*1000;})();
+    const now=Date.now();
+    if(progStartTime2===null){
+      const elapsed=pausedElapsed+(now-startTime);
+      if(elapsed<entryDelay2){
+        document.getElementById('fill').style.width='0%';
+        document.getElementById('pct').textContent='0%';
+        document.getElementById('sub').innerHTML='';
+        return;
+      }
+      progStartTime2=now-(elapsed-entryDelay2);
+    }
+    const el=pausedElapsed+(now-progStartTime2);
     const p=Math.min(100,Math.round((el/total)*100));
     document.getElementById('fill').style.width=p+'%';
     document.getElementById('pct').textContent=p+'%';
