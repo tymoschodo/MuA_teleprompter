@@ -370,6 +370,9 @@ function initPanel(opts) {
   const raw=localStorage.getItem(S+'texts');
   texts=raw?JSON.parse(raw):null;
   if(!texts) window.initDefaults(); else{renderList();selectText(0);}
+  // Always push current texts to Firebase so remote projection devices can fetch them
+  if(texts && window.__fb) window.__fb.fbSyncTexts(S, texts);
+  else if(texts) { setTimeout(()=>{ if(window.__fb) window.__fb.fbSyncTexts(S, texts); }, 2000); }
   loadGlobalUI();
   buildSwatches('colorSwatches',TC,'textColor',opts.defaultColor);
   buildSwatches('bgSwatches',BC,'bgColor',opts.defaultBg);

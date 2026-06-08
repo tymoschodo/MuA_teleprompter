@@ -182,7 +182,25 @@ function initProjection(opts) {
 
   function handleMsg(msg) {
     if (!msg) return;
-    if(msg.type==='cue')    { texts=getT(); startText(msg.idx); }
+    if(msg.type==='cue') {
+      // Get texts from localStorage first; if empty fetch from Firebase
+      const local = getT();
+      if (local.length > 0) {
+        texts = local;
+        startText(msg.idx);
+      } else if (window.__fb) {
+        // Remote device — fetch texts from Firebase then start
+        window.__fb.fbGetTexts(S).then(fbTexts => {
+          if (fbTexts && fbTexts.length > 0) {
+            texts = fbTexts;
+            localStorage.setItem(S+'texts', JSON.stringify(texts));
+          }
+          startText(msg.idx);
+        });
+      } else {
+        startText(msg.idx);
+      }
+    }
     if(msg.type==='pause')  { doPause(); }
     if(msg.type==='resume') { if(paused) doPause(); }
     if(msg.type==='stop')   { doStop(); }
