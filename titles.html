@@ -64,6 +64,25 @@
         </div>
       </div>
     </div>
+
+      <hr>
+      <label style="margin-top:0">Position — nur dieser Text (Display)</label>
+      <div class="pos-wrap">
+        <div class="pos-picker" id="ePosPicker"></div>
+        <div class="pos-sliders">
+          <label style="margin-top:0">Horizontal</label>
+          <div class="rrow">
+            <input type="range" id="ePosX" min="0" max="100" step="1" value="50" oninput="saveEdit();document.getElementById('ePosXVal').textContent=this.value+'%';syncPosPickerToValues('ePosPicker','ePosX','ePosY')">
+            <span class="rval" id="ePosXVal">auto</span>
+          </div>
+          <label>Vertikal</label>
+          <div class="rrow">
+            <input type="range" id="ePosY" min="0" max="100" step="1" value="50" oninput="saveEdit();document.getElementById('ePosYVal').textContent=this.value+'%';syncPosPickerToValues('ePosPicker','ePosX','ePosY')">
+            <span class="rval" id="ePosYVal">auto</span>
+          </div>
+          <button class="btn btn-sm" style="margin-top:.6rem;width:100%" onclick="document.getElementById('ePosX').value='';document.getElementById('ePosY').value='';document.getElementById('ePosXVal').textContent='auto';document.getElementById('ePosYVal').textContent='auto';document.getElementById('ePosPicker').querySelectorAll('.pos-cell').forEach(d=>d.classList.remove('sel'));saveEdit()">&#x21BA; Global verwenden</button>
+        </div>
+      </div>
     <div class="info" id="eInfo">Kein Text ausgewählt</div>
   </div>
   <div class="section">

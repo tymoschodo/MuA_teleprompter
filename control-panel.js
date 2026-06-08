@@ -1,3 +1,42 @@
+
+// ── POSITION PICKER ────────────────────────────────────────────────────────
+function buildPosPicker(gridId, xId, yId, xValId, yValId, onChange) {
+  const CELLS = [
+    {x:5,  y:5,  label:'↖'}, {x:50, y:5,  label:'↑'}, {x:95, y:5,  label:'↗'},
+    {x:5,  y:50, label:'←'}, {x:50, y:50, label:'·'}, {x:95, y:50, label:'→'},
+    {x:5,  y:95, label:'↙'}, {x:50, y:95, label:'↓'}, {x:95, y:95, label:'↘'},
+  ];
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+  grid.innerHTML = '';
+  CELLS.forEach(cell => {
+    const d = document.createElement('div');
+    d.className = 'pos-cell';
+    d.textContent = cell.label;
+    d.dataset.x = cell.x; d.dataset.y = cell.y;
+    d.onclick = () => {
+      grid.querySelectorAll('.pos-cell').forEach(c => c.classList.remove('sel'));
+      d.classList.add('sel');
+      if(document.getElementById(xId))  document.getElementById(xId).value  = cell.x;
+      if(document.getElementById(yId))  document.getElementById(yId).value  = cell.y;
+      if(document.getElementById(xValId)) document.getElementById(xValId).textContent = cell.x + '%';
+      if(document.getElementById(yValId)) document.getElementById(yValId).textContent = cell.y + '%';
+      onChange();
+    };
+    grid.appendChild(d);
+  });
+}
+
+function syncPosPickerToValues(gridId, xId, yId) {
+  const xv = +document.getElementById(xId).value;
+  const yv = +document.getElementById(yId).value;
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+  grid.querySelectorAll('.pos-cell').forEach(d => {
+    d.classList.toggle('sel', +d.dataset.x === xv && +d.dataset.y === yv);
+  });
+}
+
 function initPanel(opts) {
   // opts: { namespace, projectionUrl, defaultBg, defaultColor, defaultMode, label }
   const S = opts.namespace;
@@ -28,6 +67,8 @@ function initPanel(opts) {
       pad:       +document.getElementById('sPad').value,
       fade:      +parseFloat(document.getElementById('sFade').value).toFixed(1),
       duration:  +parseFloat(document.getElementById('sDuration').value).toFixed(1),
+      posX:      document.getElementById('sPosX') ? +document.getElementById('sPosX').value : 50,
+      posY:      document.getElementById('sPosY') ? +document.getElementById('sPosY').value : 50,
       textColor: activeColor('colorSwatches') || opts.defaultColor,
       bgColor:   activeColor('bgSwatches')    || opts.defaultBg,
     };
@@ -81,6 +122,9 @@ function initPanel(opts) {
     if(g.pad!==undefined) { sv('sPad',g.pad);   document.getElementById('sPadVal').textContent=g.pad+'px'; }
     if(g.fade)     { sv('sFade',g.fade);        document.getElementById('sFadeVal').textContent=g.fade+'s'; }
     if(g.duration) { sv('sDuration',g.duration);document.getElementById('sDurationVal').textContent=g.duration+'s'; }
+    if(g.posX !== undefined && document.getElementById('sPosX')) { sv('sPosX',g.posX); document.getElementById('sPosXVal').textContent=g.posX+'%'; }
+    if(g.posY !== undefined && document.getElementById('sPosY')) { sv('sPosY',g.posY); document.getElementById('sPosYVal').textContent=g.posY+'%'; }
+    if(document.getElementById('sPosPicker')) syncPosPickerToValues('sPosPicker','sPosX','sPosY');
   }
 
   // ── TEXT LIST ──────────────────────────────────────────────────────────────
@@ -118,6 +162,7 @@ function initPanel(opts) {
     const dur = t.duration||getG().duration||5;
     document.getElementById('eDur').value     = dur;
     document.getElementById('eDurVal').textContent = parseFloat(dur).toFixed(1)+'s';
+    if(document.getElementById('ePosX')) { const px = t.posX !== undefined && t.posX !== null ? t.posX : ''; const py = t.posY !== undefined && t.posY !== null ? t.posY : ''; document.getElementById('ePosX').value = px; document.getElementById('ePosY').value = py; document.getElementById('ePosXVal').textContent = px !== '' ? px+'%' : 'auto'; document.getElementById('ePosYVal').textContent = py !== '' ? py+'%' : 'auto'; if(px !== '') syncPosPickerToValues('ePosPicker','ePosX','ePosY'); else document.getElementById('ePosPicker').querySelectorAll('.pos-cell').forEach(d=>d.classList.remove('sel')); }
     updateInfo();
   }
 
@@ -133,6 +178,7 @@ function initPanel(opts) {
     texts[selIdx].content  = document.getElementById('eContent').value;
     texts[selIdx].speed    = +document.getElementById('eSpeed').value;
     texts[selIdx].duration = +parseFloat(document.getElementById('eDur').value).toFixed(1);
+    if(document.getElementById('ePosX')) { texts[selIdx].posX = document.getElementById('ePosX').value !== '' ? +document.getElementById('ePosX').value : null; texts[selIdx].posY = document.getElementById('ePosY').value !== '' ? +document.getElementById('ePosY').value : null; }
     saveTexts(); renderList(); updateInfo();
   };
 
@@ -264,5 +310,9 @@ function initPanel(opts) {
   buildSwatches('bgSwatches',BC,'bgColor',opts.defaultBg);
   // Only write defaults if nothing stored yet
   if(!localStorage.getItem(S+'global')) saveGlobal();
+  // Build position pickers
+  buildPosPicker('sPosPicker','sPosX','sPosY','sPosXVal','sPosYVal', saveGlobal);
+  buildPosPicker('ePosPicker','ePosX','ePosY','ePosXVal','ePosYVal', saveEdit);
+  syncPosPickerToValues('sPosPicker','sPosX','sPosY');
   setState('idle');
 }

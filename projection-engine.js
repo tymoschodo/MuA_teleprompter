@@ -36,6 +36,8 @@ function initProjection(opts) {
       speed:     t.speed     || g.speed || 60,
       keepText:  g.keepText  || false,
       duration:  t.duration  || g.duration || 5,
+      posX: (t.posX !== undefined && t.posX !== null && t.posX !== '') ? +t.posX : (g.posX !== undefined ? +g.posX : 50),
+      posY: (t.posY !== undefined && t.posY !== null && t.posY !== '') ? +t.posY : (g.posY !== undefined ? +g.posY : 50),
     };
   }
 
@@ -85,8 +87,10 @@ function initProjection(opts) {
       wrap.style.transform='translate(0px,0px)';
       requestAnimationFrame(()=>{
         void wrap.offsetHeight;
-        const H=window.innerHeight,th=wrap.offsetHeight;
-        wrap.style.transform=`translate(0px,${Math.max(0,(H-th)/2)}px)`;
+        const W=window.innerWidth,H=window.innerHeight,tw=wrap.offsetWidth,th=wrap.offsetHeight;
+        const px=Math.max(0,Math.min(W-tw, (s.posX/100)*(W-tw)));
+        const py=Math.max(0,Math.min(H-th, (s.posY/100)*(H-th)));
+        wrap.style.transform=`translate(${px}px,${py}px)`;
         wrap.style.opacity='0';
         wrap.style.transition=`opacity ${s.fade}s ease`;
         // Small timeout so browser registers opacity:0 before transitioning to 1
