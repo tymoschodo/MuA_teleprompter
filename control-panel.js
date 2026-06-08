@@ -178,7 +178,12 @@ function initPanel(opts) {
     texts[selIdx].content  = document.getElementById('eContent').value;
     texts[selIdx].speed    = +document.getElementById('eSpeed').value;
     texts[selIdx].duration = +parseFloat(document.getElementById('eDur').value).toFixed(1);
-    if(document.getElementById('ePosX')) { texts[selIdx].posX = document.getElementById('ePosX').value !== '' ? +document.getElementById('ePosX').value : null; texts[selIdx].posY = document.getElementById('ePosY').value !== '' ? +document.getElementById('ePosY').value : null; }
+    if(document.getElementById('ePosX')) {
+      const picker = document.getElementById('ePosPicker');
+      const isOverride = picker && parseFloat(picker.style.opacity || '1') > 0.5;
+      texts[selIdx].posX = isOverride ? +document.getElementById('ePosX').value : null;
+      texts[selIdx].posY = isOverride ? +document.getElementById('ePosY').value : null;
+    }
     saveTexts(); renderList(); updateInfo();
   };
 
@@ -314,5 +319,27 @@ function initPanel(opts) {
   buildPosPicker('sPosPicker','sPosX','sPosY','sPosXVal','sPosYVal', saveGlobal);
   buildPosPicker('ePosPicker','ePosX','ePosY','ePosXVal','ePosYVal', saveEdit);
   syncPosPickerToValues('sPosPicker','sPosX','sPosY');
+
+  // "Global verwenden" button — resets per-text override and shows global values
+  window.clearPosOverride = function() {
+    const g = getG();
+    const gx = g.posX !== undefined ? g.posX : 50;
+    const gy = g.posY !== undefined ? g.posY : 50;
+    if(selIdx >= 0 && selIdx < texts.length) {
+      texts[selIdx].posX = null;
+      texts[selIdx].posY = null;
+      saveTexts();
+    }
+    if(document.getElementById('ePosX')) document.getElementById('ePosX').value = gx;
+    if(document.getElementById('ePosY')) document.getElementById('ePosY').value = gy;
+    if(document.getElementById('ePosXVal')) document.getElementById('ePosXVal').textContent = gx+'%';
+    if(document.getElementById('ePosYVal')) document.getElementById('ePosYVal').textContent = gy+'%';
+    syncPosPickerToValues('ePosPicker','ePosX','ePosY');
+    const picker = document.getElementById('ePosPicker');
+    if(picker) picker.style.opacity = '0.4';
+    const badge = document.getElementById('ePosStatus');
+    if(badge) { badge.textContent = 'Standard'; badge.style.color = 'var(--mu)'; badge.style.borderColor = 'var(--bd)'; }
+  };
+
   setState('idle');
 }
