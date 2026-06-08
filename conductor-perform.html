@@ -111,10 +111,12 @@ function renderList(){
     const d=document.createElement('div');
     d.className='ci '+cls;
     d.innerHTML=`<div class="ci-row"><span class="ci-num">${String(i+1).padStart(2,'0')}</span><span class="ci-title">${t.title||'(kein Titel)'}</span><span class="ci-icon">${icon}</span></div>${t.cue?`<div class="ci-cue">↳ ${t.cue}</div>`:''}`;
-    d.onclick=()=>jumpTo(i);
+    d.onclick=()=>{ if(state==='running') return; jumpTo(i); };
     el.appendChild(d);
   });
   if(curIdx>=0){const items=el.querySelectorAll('.ci');if(items[curIdx])items[curIdx].scrollIntoView({block:'nearest',behavior:'smooth'});}
+  const lw=document.getElementById('cueList');
+  if(lw){lw.style.opacity=state==='running'?'0.5':'1';lw.style.pointerEvents=state==='running'?'none':'auto';}
 }
 
 function updateNext(){

@@ -150,10 +150,13 @@ function initPanel(opts) {
       const d = document.createElement('div');
       d.className = 'ti'+(i===selIdx?' sel':'')+' '+cls;
       d.innerHTML = `<span class="tnum">${String(i+1).padStart(2,'0')}</span><span class="ttitle">${t.title||'(kein Titel)'}</span>${cueNote}<span class="ticon">${icon}</span>`;
-      d.onclick = () => { if(typeof window.selectCue==='function') window.selectCue(i); else selectText(i); };
+      d.onclick = () => { if(state==='running') return; if(typeof window.selectCue==='function') window.selectCue(i); else selectText(i); };
       el.appendChild(d);
     });
     if(curCueIdx>=0){const items=el.querySelectorAll('.ti');if(items[curCueIdx])items[curCueIdx].scrollIntoView({block:'nearest',behavior:'smooth'});}
+    // Lock list visually while running
+    const lw=document.getElementById('textList');
+    if(lw){lw.style.opacity=state==='running'?'0.5':'1';lw.style.pointerEvents=state==='running'?'none':'auto';}
   }
 
   function selectText(i) {
