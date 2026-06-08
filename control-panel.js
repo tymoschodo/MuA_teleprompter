@@ -49,7 +49,12 @@ function initPanel(opts) {
 
   function getG()   { return JSON.parse(localStorage.getItem(S+'global') || '{}'); }
   function saveG(g) { localStorage.setItem(S+'global', JSON.stringify(g)); broadcast({type:'global',data:g}); }
-  function broadcast(msg) { localStorage.setItem(S+'msg', JSON.stringify({...msg, ts:Date.now()})); }
+  function broadcast(msg) {
+    const full = {...msg, ts: Date.now()};
+    localStorage.setItem(S+'msg', JSON.stringify(full));
+    // Also broadcast via Firebase for cross-device sync
+    if (window.__fb) window.__fb.fbBroadcast(S, full);
+  }
 
   // ── GLOBAL SETTINGS ────────────────────────────────────────────────────────
   window.saveGlobal = function() {
@@ -131,6 +136,8 @@ function initPanel(opts) {
   function saveTexts() {
     localStorage.setItem(S+'texts', JSON.stringify(texts));
     broadcast({type:'texts', data:texts});
+    // Sync texts to Firebase so projection devices always have latest
+    if (window.__fb) window.__fb.fbSyncTexts(S, texts);
   }
 
   function renderList() {

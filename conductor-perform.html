@@ -97,7 +97,11 @@ let texts=[],curIdx=-1,state='idle';
 let progInt=null,startTime=0,totalDur=0,totalWords=0,pausedElapsed=0;
 
 function getG(){return JSON.parse(localStorage.getItem(S+'global')||'{}')}
-function broadcast(msg){localStorage.setItem(S+'msg',JSON.stringify({...msg,ts:Date.now()}))}
+function broadcast(msg){
+  const full={...msg,ts:Date.now()};
+  localStorage.setItem(S+'msg',JSON.stringify(full));
+  if(window.__fb) window.__fb.fbBroadcast(S, full);
+}
 function loadTexts(){const r=localStorage.getItem(S+'texts');texts=r?JSON.parse(r):[];renderList();updateNext();}
 
 function renderList(){
@@ -203,4 +207,5 @@ document.addEventListener('keydown',e=>{
 
 loadTexts();setState('idle');
 </script>
+<script src="firebase-sync.js"></script>
 </body></html>

@@ -180,18 +180,43 @@ function initProjection(opts) {
     },520);
   }
 
+  function handleMsg(msg) {
+    if (!msg) return;
+    if(msg.type==='cue')    { texts=getT(); startText(msg.idx); }
+    if(msg.type==='pause')  { doPause(); }
+    if(msg.type==='resume') { if(paused) doPause(); }
+    if(msg.type==='stop')   { doStop(); }
+    if(msg.type==='texts' && msg.data) {
+      texts = msg.data;
+      localStorage.setItem(S+'texts', JSON.stringify(texts));
+    }
+  }
+
+  // Same-device sync via localStorage
   window.addEventListener('storage', e => {
     if(e.key===S+'texts') texts=JSON.parse(e.newValue||'[]');
-    if(e.key===S+'msg') {
-      try {
-        const msg=JSON.parse(e.newValue||'{}');
-        if(msg.type==='cue')    {texts=getT();startText(msg.idx);}
-        if(msg.type==='pause')  {doPause();}
-        if(msg.type==='resume') {if(paused)doPause();}
-        if(msg.type==='stop')   {doStop();}
-      } catch(e){}
-    }
+    if(e.key===S+'msg') { try { handleMsg(JSON.parse(e.newValue||'{}')); } catch(e){} }
   });
+
+  // Cross-device sync via Firebase
+  // Wait for firebase-sync.js to be ready then start listening
+  function startFirebaseListener() {
+    if (window.__fb) {
+      // Fetch latest texts from Firebase on load
+      window.__fb.fbGetTexts(S).then(fbTexts => {
+        if (fbTexts) {
+          texts = fbTexts;
+          localStorage.setItem(S+'texts', JSON.stringify(texts));
+        }
+      });
+      // Listen for cue messages
+      window.__fb.fbListen(S, handleMsg);
+    } else {
+      // firebase-sync.js not loaded yet, retry
+      setTimeout(startFirebaseListener, 200);
+    }
+  }
+  startFirebaseListener();
 
   document.addEventListener('keydown', e => {
     if(e.key==='f'||e.key==='F'){
