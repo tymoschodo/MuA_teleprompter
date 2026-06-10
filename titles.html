@@ -208,6 +208,11 @@
     <button class="btn btn-sm" onclick="document.getElementById('iFile').click()">↑ Import</button>
     <input type="file" id="iFile" accept=".json" style="display:none" onchange="importData(event)">
     <button class="btn btn-sm btn-dn" onclick="if(confirm('Zurücksetzen?'))initDefaults()">↺ Reset</button>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:.5rem">
+      <span id="cloudStatus" style="font-family:var(--mono);font-size:.62rem;transition:color .3s"></span>
+      <button class="btn btn-sm" onclick="loadFromCloud()" style="border-color:#4a9eff;color:#4a9eff">☁ Laden</button>
+      <button class="btn btn-sm" onclick="saveToCloud()" style="border-color:#4a9eff;color:#4a9eff">☁ Speichern</button>
+    </div>
   </div>
 </div>
 </div>

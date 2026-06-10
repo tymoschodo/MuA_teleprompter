@@ -51,7 +51,7 @@ function initPanel(opts) {
   function saveG(g) {
     localStorage.setItem(S+'global', JSON.stringify(g));
     broadcast({type:'global', data:g});
-    if (window.__fb) window.__fb.fbSyncSettings(S, g);
+    // Note: to sync to other devices, use ☁ Speichern button
   }
   function broadcast(msg) {
     const full = {...msg, ts: Date.now()};
@@ -144,8 +144,7 @@ function initPanel(opts) {
   function saveTexts() {
     localStorage.setItem(S+'texts', JSON.stringify(texts));
     broadcast({type:'texts', data:texts});
-    // Sync texts to Firebase so projection devices always have latest
-    if (window.__fb) window.__fb.fbSyncTexts(S, texts);
+    // Note: to sync to other devices, use ☁ Speichern button
   }
 
   function renderList() {
@@ -379,43 +378,47 @@ function initPanel(opts) {
   texts=raw?JSON.parse(raw):null;
   if(!texts) window.initDefaults(); else{renderList();selectText(0);}
 
-  // Sync texts and settings with Firebase
-  function syncWithFirebase() {
-    if (!window.__fb) { setTimeout(syncWithFirebase, 500); return; }
-    // Push local texts to Firebase
-    if (texts) window.__fb.fbSyncTexts(S, texts);
-    // Fetch settings from Firebase — remote wins (latest edit wins)
-    window.__fb.fbGetSettings(S).then(fbSettings => {
-      if (!fbSettings) {
-        // Nothing in Firebase yet — push local settings up
-        window.__fb.fbSyncSettings(S, getG());
-        return;
-      }
-      const local = getG();
-      // If Firebase settings are newer, apply them
-      if (!local._ts || (fbSettings._ts && fbSettings._ts > local._ts)) {
-        localStorage.setItem(S+'global', JSON.stringify(fbSettings));
-        loadGlobalUI();
-        // Build swatches using the fetched color values directly
-        const tcol = fbSettings.textColor || opts.defaultColor;
-        const bcol = fbSettings.bgColor   || opts.defaultBg;
-        buildSwatchesWith('colorSwatches', TC, tcol);
-        buildSwatchesWith('bgSwatches',    BC, bcol);
-      } else {
-        // Local is newer — push to Firebase
-        window.__fb.fbSyncSettings(S, local);
-      }
-    });
-    // Fetch texts from Firebase too in case they're newer
-    window.__fb.fbGetTexts(S).then(fbTexts => {
+  // ── CLOUD SAVE / LOAD ────────────────────────────────────────────────────
+  window.saveToCloud = function() {
+    if (!window.__fb) { alert('Firebase not connected yet, try again in a moment.'); return; }
+    const g = getG();
+    window.__fb.fbSyncTexts(S, texts);
+    window.__fb.fbSyncSettings(S, g);
+    showCloudStatus('☁ Gespeichert', 'var(--ac)');
+  };
+
+  window.loadFromCloud = function() {
+    if (!window.__fb) { alert('Firebase not connected yet, try again in a moment.'); return; }
+    showCloudStatus('… Laden', 'var(--mu)');
+    Promise.all([
+      window.__fb.fbGetTexts(S),
+      window.__fb.fbGetSettings(S)
+    ]).then(([fbTexts, fbSettings]) => {
+      let changed = false;
       if (fbTexts && fbTexts.length > 0) {
         texts = fbTexts;
         localStorage.setItem(S+'texts', JSON.stringify(texts));
         renderList(); selectText(0);
+        changed = true;
       }
-    });
+      if (fbSettings) {
+        localStorage.setItem(S+'global', JSON.stringify(fbSettings));
+        loadGlobalUI();
+        buildSwatchesWith('colorSwatches', TC, fbSettings.textColor || opts.defaultColor);
+        buildSwatchesWith('bgSwatches',    BC, fbSettings.bgColor   || opts.defaultBg);
+        changed = true;
+      }
+      showCloudStatus(changed ? '☁ Geladen' : '☁ Nichts in der Cloud', changed ? 'var(--ac)' : 'var(--mu)');
+    }).catch(() => showCloudStatus('⚠ Fehler', 'var(--dn)'));
+  };
+
+  function showCloudStatus(msg, color) {
+    const el = document.getElementById('cloudStatus');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.color = color;
+    setTimeout(() => { el.textContent = ''; }, 3000);
   }
-  syncWithFirebase();
   loadGlobalUI();
   buildSwatches('colorSwatches',TC,'textColor',opts.defaultColor);
   buildSwatches('bgSwatches',BC,'bgColor',opts.defaultBg);
