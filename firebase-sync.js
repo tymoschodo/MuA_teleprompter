@@ -77,7 +77,31 @@ function fbGetTexts(namespace) {
   });
 }
 
-window.__fb = { fbBroadcast, fbListen, fbSyncTexts, fbGetTexts };
+function fbSyncSettings(namespace, settings) {
+  whenReady(() => {
+    const path = 'settings/' + namespace.replace(/[^a-zA-Z0-9_]/g, '_');
+    _db.ref(path).set({ data: JSON.stringify(settings), ts: Date.now() })
+      .catch(e => console.warn('[Firebase] syncSettings failed:', e));
+  });
+}
 
-// Init immediately — firebase compat scripts must be loaded before this
-_init();
+function fbGetSettings(namespace) {
+  return new Promise((resolve) => {
+    whenReady(() => {
+      const path = 'settings/' + namespace.replace(/[^a-zA-Z0-9_]/g, '_');
+      _db.ref(path).once('value').then(snapshot => {
+        const val = snapshot.val();
+        resolve((val && val.data) ? JSON.parse(val.data) : null);
+      }).catch(() => resolve(null));
+    });
+  });
+}
+
+window.__fb = { fbBroadcast, fbListen, fbSyncTexts, fbGetTexts, fbSyncSettings, fbGetSettings };
+
+// Init — defer slightly to ensure compat scripts are fully parsed
+if (typeof firebase !== 'undefined') {
+  _init();
+} else {
+  window.addEventListener('load', _init);
+}

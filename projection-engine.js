@@ -183,13 +183,11 @@ function initProjection(opts) {
   function handleMsg(msg) {
     if (!msg) return;
     if(msg.type==='cue') {
-      // Get texts from localStorage first; if empty fetch from Firebase
       const local = getT();
       if (local.length > 0) {
         texts = local;
         startText(msg.idx);
       } else if (window.__fb) {
-        // Remote device — fetch texts from Firebase then start
         window.__fb.fbGetTexts(S).then(fbTexts => {
           if (fbTexts && fbTexts.length > 0) {
             texts = fbTexts;
@@ -208,6 +206,15 @@ function initProjection(opts) {
       texts = msg.data;
       localStorage.setItem(S+'texts', JSON.stringify(texts));
     }
+    // Apply settings changes live without needing a new cue
+    if(msg.type==='global' && msg.data) {
+      localStorage.setItem(S+'global', JSON.stringify(msg.data));
+      const s = resolve(-1); // resolve with no text index = just global settings
+      document.body.style.background = s.bgColor;
+      if(stage) stage.style.background = s.bgColor;
+      // If text is currently displayed, re-apply visual immediately
+      if(!stopped) applyVisual(s);
+    }
   }
 
   // Same-device sync via localStorage
@@ -222,15 +229,24 @@ function initProjection(opts) {
     if (window.__fb) {
       // Fetch latest texts from Firebase on load
       window.__fb.fbGetTexts(S).then(fbTexts => {
-        if (fbTexts) {
+        if (fbTexts && fbTexts.length > 0) {
           texts = fbTexts;
           localStorage.setItem(S+'texts', JSON.stringify(texts));
+        }
+      });
+      // Fetch latest settings from Firebase on load
+      window.__fb.fbGetSettings(S).then(fbSettings => {
+        if (fbSettings) {
+          localStorage.setItem(S+'global', JSON.stringify(fbSettings));
+          // Re-apply background color immediately
+          const bg = fbSettings.bgColor || opts.defaultBg;
+          document.body.style.background = bg;
+          if(stage) stage.style.background = bg;
         }
       });
       // Listen for cue messages
       window.__fb.fbListen(S, handleMsg);
     } else {
-      // firebase-sync.js not loaded yet, retry
       setTimeout(startFirebaseListener, 200);
     }
   }

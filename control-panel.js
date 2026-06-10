@@ -48,7 +48,11 @@ function initPanel(opts) {
   let progInt = null, startTime = 0, totalDur = 0, totalWords = 0, pausedElapsed = 0;
 
   function getG()   { return JSON.parse(localStorage.getItem(S+'global') || '{}'); }
-  function saveG(g) { localStorage.setItem(S+'global', JSON.stringify(g)); broadcast({type:'global',data:g}); }
+  function saveG(g) {
+    localStorage.setItem(S+'global', JSON.stringify(g));
+    broadcast({type:'global', data:g});
+    if (window.__fb) window.__fb.fbSyncSettings(S, g);
+  }
   function broadcast(msg) {
     const full = {...msg, ts: Date.now()};
     localStorage.setItem(S+'msg', JSON.stringify(full));
@@ -59,6 +63,7 @@ function initPanel(opts) {
   // ── GLOBAL SETTINGS ────────────────────────────────────────────────────────
   window.saveGlobal = function() {
     const g = {
+      _ts:       Date.now(),
       mode:      document.getElementById('modeScroll').classList.contains('on') ? 'scroll' : 'display',
       dir:       document.getElementById('sDir').value,
       speed:     +document.getElementById('sSpeed').value,
@@ -99,18 +104,21 @@ function initPanel(opts) {
     const e = document.querySelector('#'+id+' .cs.sel');
     return e ? e.dataset.c : null;
   }
-  function buildSwatches(id, colors, key, def) {
-    const cont = document.getElementById(id); cont.innerHTML = '';
-    const cur = getG()[key] || def;
+  function buildSwatchesWith(id, colors, currentColor) {
+    const cont = document.getElementById(id); if(!cont) return;
+    cont.innerHTML = '';
     colors.forEach(col => {
       const d = document.createElement('div');
-      d.className = 'cs' + (col===cur?' sel':'');
+      d.className = 'cs' + (col===currentColor?' sel':'');
       d.style.background = col;
       d.style.outline = (col==='#000000'||col==='#0e0e0f'||col==='#1a1a1d') ? '1px solid #555' : (col==='#ffffff'||col==='#f5f5f0') ? '1px solid #ccc' : '';
       d.dataset.c = col; d.title = col;
       d.onclick = () => { cont.querySelectorAll('.cs').forEach(x=>x.classList.remove('sel')); d.classList.add('sel'); saveGlobal(); };
       cont.appendChild(d);
     });
+  }
+  function buildSwatches(id, colors, key, def) {
+    buildSwatchesWith(id, colors, getG()[key] || def);
   }
 
   function loadGlobalUI() {
@@ -356,7 +364,7 @@ function initPanel(opts) {
       try{
         const d=JSON.parse(ev.target.result);
         if(d.texts){texts=d.texts;saveTexts();}
-        if(d.global){localStorage.setItem(S+'global',JSON.stringify(d.global));loadGlobalUI();buildSwatches('colorSwatches',TC,'textColor',opts.defaultColor);buildSwatches('bgSwatches',BC,'bgColor',opts.defaultBg);}
+        if(d.global){localStorage.setItem(S+'global',JSON.stringify(d.global));loadGlobalUI();buildSwatchesWith('colorSwatches',TC,getG().textColor||opts.defaultColor);buildSwatchesWith('bgSwatches',BC,getG().bgColor||opts.defaultBg);}
         renderList();selectText(0);
       }catch(err){alert('Fehler: '+err.message);}
     };r.readAsText(f);
@@ -370,9 +378,44 @@ function initPanel(opts) {
   const raw=localStorage.getItem(S+'texts');
   texts=raw?JSON.parse(raw):null;
   if(!texts) window.initDefaults(); else{renderList();selectText(0);}
-  // Always push current texts to Firebase so remote projection devices can fetch them
-  if(texts && window.__fb) window.__fb.fbSyncTexts(S, texts);
-  else if(texts) { setTimeout(()=>{ if(window.__fb) window.__fb.fbSyncTexts(S, texts); }, 2000); }
+
+  // Sync texts and settings with Firebase
+  function syncWithFirebase() {
+    if (!window.__fb) { setTimeout(syncWithFirebase, 500); return; }
+    // Push local texts to Firebase
+    if (texts) window.__fb.fbSyncTexts(S, texts);
+    // Fetch settings from Firebase — remote wins (latest edit wins)
+    window.__fb.fbGetSettings(S).then(fbSettings => {
+      if (!fbSettings) {
+        // Nothing in Firebase yet — push local settings up
+        window.__fb.fbSyncSettings(S, getG());
+        return;
+      }
+      const local = getG();
+      // If Firebase settings are newer, apply them
+      if (!local._ts || (fbSettings._ts && fbSettings._ts > local._ts)) {
+        localStorage.setItem(S+'global', JSON.stringify(fbSettings));
+        loadGlobalUI();
+        // Build swatches using the fetched color values directly
+        const tcol = fbSettings.textColor || opts.defaultColor;
+        const bcol = fbSettings.bgColor   || opts.defaultBg;
+        buildSwatchesWith('colorSwatches', TC, tcol);
+        buildSwatchesWith('bgSwatches',    BC, bcol);
+      } else {
+        // Local is newer — push to Firebase
+        window.__fb.fbSyncSettings(S, local);
+      }
+    });
+    // Fetch texts from Firebase too in case they're newer
+    window.__fb.fbGetTexts(S).then(fbTexts => {
+      if (fbTexts && fbTexts.length > 0) {
+        texts = fbTexts;
+        localStorage.setItem(S+'texts', JSON.stringify(texts));
+        renderList(); selectText(0);
+      }
+    });
+  }
+  syncWithFirebase();
   loadGlobalUI();
   buildSwatches('colorSwatches',TC,'textColor',opts.defaultColor);
   buildSwatches('bgSwatches',BC,'bgColor',opts.defaultBg);
