@@ -156,7 +156,7 @@ function initPanel(opts) {
       const cueNote = t.cue ? `<span class="tspd" style="color:var(--ac2);opacity:.7;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.cue}</span>` : '';
       const d = document.createElement('div');
       d.className = 'ti'+(i===selIdx?' sel':'')+' '+cls;
-      d.innerHTML = `<span class="tnum">${String(i+1).padStart(2,'0')}</span><span class="ttitle">${t.title||'(kein Titel)'}</span>${cueNote}<span class="ticon">${icon}</span>`;
+      d.innerHTML = `<span class="tnum">${String(i+1).padStart(2,'0')}</span><span class="ttitle">${t.title||'(kein Titel)'}</span>${cueNote}<span class="ticon">${icon}</span><button class="png-btn" title="PNG exportieren" onclick="event.stopPropagation();exportTextAsPNG(${i})">PNG</button>`;
       d.onclick = () => { if(state==='running') return; if(typeof window.selectCue==='function') window.selectCue(i); else selectText(i); };
       el.appendChild(d);
     });
@@ -340,6 +340,131 @@ function initPanel(opts) {
   window.addEventListener('storage', e => {
     if(e.key===S+'texts'){ texts=JSON.parse(e.newValue||'[]'); renderList(); }
   });
+
+
+  // ── PNG EXPORT ─────────────────────────────────────────────────────────────
+  const PNG_W = 3840, PNG_H = 2160;
+
+  async function exportTextAsPNG(idx) {
+    const t = texts[idx];
+    if (!t) return;
+    const g = getG();
+
+    // Settings
+    const bgColor   = g.bgColor   || opts.defaultBg;
+    const textColor = g.textColor || opts.defaultColor;
+    const fontSize  = g.size      || 72;
+    const fontFamily= (g.font     || "'Syne',sans-serif").replace(/'/g, '');
+    const fontWeight= g.weight    || '700';
+    const lineHeight= g.lineH     || 1.6;
+    const padding   = g.pad       !== undefined ? g.pad : 80;
+    const align     = g.align     || 'left';
+
+    // Scale factor: canvas is 3840x2160, but we work at 2x for crispness
+    // then scale up — actually just use the canvas at full 3840x2160 directly
+    const canvas = document.createElement('canvas');
+    canvas.width  = PNG_W;
+    canvas.height = PNG_H;
+    const ctx = canvas.getContext('2d');
+
+    // Load font if needed (wait for Google Fonts)
+    try {
+      await document.fonts.ready;
+    } catch(e) {}
+
+    const font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+    ctx.font = font;
+
+    const lineH    = Math.round(fontSize * lineHeight);
+    const maxWidth = PNG_W - padding * 2;
+    const maxLines = Math.floor((PNG_H - padding * 2) / lineH);
+
+    // Word-wrap the content into lines
+    function wrapText(text) {
+      const paragraphs = text.split('\n');
+      const lines = [];
+      for (const para of paragraphs) {
+        if (para.trim() === '') { lines.push(''); continue; }
+        const words = para.split(' ');
+        let line = '';
+        for (const word of words) {
+          const test = line ? line + ' ' + word : word;
+          if (ctx.measureText(test).width > maxWidth && line) {
+            lines.push(line);
+            line = word;
+          } else {
+            line = test;
+          }
+        }
+        if (line) lines.push(line);
+      }
+      return lines;
+    }
+
+    const allLines = wrapText(t.content || '');
+
+    // Split into pages of maxLines each
+    const pages = [];
+    for (let i = 0; i < allLines.length; i += maxLines) {
+      pages.push(allLines.slice(i, i + maxLines));
+    }
+    if (pages.length === 0) pages.push(['']);
+
+    // Generate one canvas per page and download
+    const blobs = [];
+    for (let p = 0; p < pages.length; p++) {
+      const pageLines = pages[p];
+      ctx.clearRect(0, 0, PNG_W, PNG_H);
+
+      // Background
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, PNG_W, PNG_H);
+
+      // Text
+      ctx.fillStyle = textColor;
+      ctx.font = font;
+      ctx.textAlign = align === 'center' ? 'center' : align === 'right' ? 'right' : 'left';
+
+      const x = align === 'center' ? PNG_W / 2 :
+                 align === 'right' ? PNG_W - padding : padding;
+      const totalTextH = pageLines.length * lineH;
+      let y = padding + fontSize; // start from top with padding
+
+      for (const line of pageLines) {
+        ctx.fillText(line, x, y);
+        y += lineH;
+      }
+
+      const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+      blobs.push({ blob, name: `${t.title||'text'}-${p+1}.png` });
+    }
+
+    // Download — single file or ZIP
+    if (blobs.length === 1) {
+      downloadBlob(blobs[0].blob, blobs[0].name);
+    } else {
+      // Multiple pages — download each
+      for (const { blob, name } of blobs) {
+        downloadBlob(blob, name);
+      }
+    }
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  window.exportTextAsPNG = exportTextAsPNG;
+
+  window.exportAllAsPNG = async function() {
+    for (let i = 0; i < texts.length; i++) {
+      await exportTextAsPNG(i);
+      await new Promise(r => setTimeout(r, 300)); // small gap between downloads
+    }
+  };
 
   // Keyboard/pedal cues only for conductor namespace, and only when not typing in a field
   if (opts.keyboardCues) {

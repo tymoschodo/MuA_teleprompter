@@ -82,3 +82,13 @@ hr{border:none;border-top:1px solid var(--bd);margin:.75rem 0}
 .pos-cell.sel{border-color:var(--ac);background:rgba(232,255,71,.12);color:var(--ac)}
 .pos-wrap{display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap}
 .pos-sliders{flex:1;min-width:140px}
+
+/* PNG export button */
+.png-btn{
+  font-family:var(--mono);font-size:.52rem;font-weight:700;
+  padding:.15rem .4rem;border-radius:3px;
+  border:1px solid var(--bd);background:transparent;
+  color:var(--mu);cursor:pointer;flex-shrink:0;
+  transition:all .14s;line-height:1;
+}
+.png-btn:hover{border-color:var(--ac);color:var(--ac);background:rgba(232,255,71,.08)}
