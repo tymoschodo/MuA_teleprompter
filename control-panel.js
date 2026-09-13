@@ -345,56 +345,50 @@ function initPanel(opts) {
   // ── PNG EXPORT ─────────────────────────────────────────────────────────────
   const PNG_W = 3840, PNG_H = 2160;
 
-  async function exportTextAsPNG(idx) {
+  function sanitizeFilename(str) {
+    return (str||'text').replace(/[^a-zA-Z0-9äöüÄÖÜß\-_. ]/g, '_').trim() || 'text';
+  }
+
+  async function renderTextPages(idx) {
+    // Returns array of {blob, name} for each page of text idx
     const t = texts[idx];
-    if (!t) return;
+    if (!t || !(t.content||'').trim()) return [];
     const g = getG();
 
-    // Settings
-    const bgColor   = g.bgColor   || opts.defaultBg;
-    const textColor = g.textColor || opts.defaultColor;
-    const fontSize  = g.size      || 72;
-    const fontFamily= (g.font     || "'Syne',sans-serif").replace(/'/g, '');
-    const fontWeight= g.weight    || '700';
-    const lineHeight= g.lineH     || 1.6;
-    const padding   = g.pad       !== undefined ? g.pad : 80;
-    const align     = g.align     || 'left';
+    const bgColor    = g.bgColor   || opts.defaultBg;
+    const textColor  = g.textColor || opts.defaultColor;
+    const fontSize   = g.size      || 72;
+    const rawFont    = (g.font     || "'Syne',sans-serif").replace(/'/g, '');
+    const fontWeight = g.weight    || '700';
+    const lineHeightM= g.lineH     || 1.6;
+    const padding    = g.pad       !== undefined ? g.pad : 80;
+    const align      = g.align     || 'left';
 
-    // Scale factor: canvas is 3840x2160, but we work at 2x for crispness
-    // then scale up — actually just use the canvas at full 3840x2160 directly
     const canvas = document.createElement('canvas');
     canvas.width  = PNG_W;
     canvas.height = PNG_H;
     const ctx = canvas.getContext('2d');
 
-    // Load font if needed (wait for Google Fonts)
-    try {
-      await document.fonts.ready;
-    } catch(e) {}
+    try { await document.fonts.ready; } catch(e) {}
 
-    const font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-    ctx.font = font;
+    const fontStr  = `${fontWeight} ${fontSize}px ${rawFont}`;
+    ctx.font = fontStr;
 
-    const lineH    = Math.round(fontSize * lineHeight);
+    const lineH    = Math.round(fontSize * lineHeightM);
     const maxWidth = PNG_W - padding * 2;
     const maxLines = Math.floor((PNG_H - padding * 2) / lineH);
 
-    // Word-wrap the content into lines
+    // Word-wrap
     function wrapText(text) {
-      const paragraphs = text.split('\n');
       const lines = [];
-      for (const para of paragraphs) {
-        if (para.trim() === '') { lines.push(''); continue; }
-        const words = para.split(' ');
+      for (const para of text.split('\n')) {
+        if (!para.trim()) { lines.push(''); continue; }
         let line = '';
-        for (const word of words) {
+        for (const word of para.split(' ')) {
           const test = line ? line + ' ' + word : word;
           if (ctx.measureText(test).width > maxWidth && line) {
-            lines.push(line);
-            line = word;
-          } else {
-            line = test;
-          }
+            lines.push(line); line = word;
+          } else { line = test; }
         }
         if (line) lines.push(line);
       }
@@ -402,68 +396,84 @@ function initPanel(opts) {
     }
 
     const allLines = wrapText(t.content || '');
-
-    // Split into pages of maxLines each
     const pages = [];
-    for (let i = 0; i < allLines.length; i += maxLines) {
-      pages.push(allLines.slice(i, i + maxLines));
-    }
-    if (pages.length === 0) pages.push(['']);
+    for (let i = 0; i < allLines.length; i += maxLines) pages.push(allLines.slice(i, i + maxLines));
+    if (!pages.length) return [];
 
-    // Generate one canvas per page and download
-    const blobs = [];
+    const baseName = sanitizeFilename(t.title);
+    const result = [];
+
     for (let p = 0; p < pages.length; p++) {
-      const pageLines = pages[p];
       ctx.clearRect(0, 0, PNG_W, PNG_H);
-
-      // Background
       ctx.fillStyle = bgColor;
       ctx.fillRect(0, 0, PNG_W, PNG_H);
-
-      // Text
       ctx.fillStyle = textColor;
-      ctx.font = font;
+      ctx.font = fontStr;
       ctx.textAlign = align === 'center' ? 'center' : align === 'right' ? 'right' : 'left';
-
-      const x = align === 'center' ? PNG_W / 2 :
-                 align === 'right' ? PNG_W - padding : padding;
-      const totalTextH = pageLines.length * lineH;
-      let y = padding + fontSize; // start from top with padding
-
-      for (const line of pageLines) {
-        ctx.fillText(line, x, y);
-        y += lineH;
-      }
-
+      const x = align === 'center' ? PNG_W/2 : align === 'right' ? PNG_W-padding : padding;
+      let y = padding + fontSize;
+      for (const line of pages[p]) { ctx.fillText(line, x, y); y += lineH; }
       const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-      blobs.push({ blob, name: `${t.title||'text'}-${p+1}.png` });
+      const name = pages.length > 1 ? `${baseName}-${p+1}.png` : `${baseName}.png`;
+      result.push({ blob, name });
     }
-
-    // Download — single file or ZIP
-    if (blobs.length === 1) {
-      downloadBlob(blobs[0].blob, blobs[0].name);
-    } else {
-      // Multiple pages — download each
-      for (const { blob, name } of blobs) {
-        downloadBlob(blob, name);
-      }
-    }
+    return result;
   }
 
   function downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = filename; a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
   }
 
-  window.exportTextAsPNG = exportTextAsPNG;
+  // Export single text — downloads immediately
+  window.exportTextAsPNG = async function(idx) {
+    const pages = await renderTextPages(idx);
+    if (!pages.length) { alert('Kein Inhalt zum Exportieren.'); return; }
+    for (const { blob, name } of pages) downloadBlob(blob, name);
+  };
 
+  // Export all texts — bundles into a single ZIP
   window.exportAllAsPNG = async function() {
-    for (let i = 0; i < texts.length; i++) {
-      await exportTextAsPNG(i);
-      await new Promise(r => setTimeout(r, 300)); // small gap between downloads
+    // Load JSZip from CDN
+    showCloudStatus('… Generiere PNGs', 'var(--mu)');
+    let JSZip;
+    try {
+      const mod = await import('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js');
+      JSZip = mod.default || window.JSZip;
+    } catch(e) {}
+
+    // Fallback: if JSZip not available, download individually with delay
+    if (!JSZip && !window.JSZip) {
+      showCloudStatus('… Lade PNGs herunter', 'var(--mu)');
+      for (let i = 0; i < texts.length; i++) {
+        const pages = await renderTextPages(i);
+        for (const { blob, name } of pages) {
+          downloadBlob(blob, name);
+          await new Promise(r => setTimeout(r, 800));
+        }
+      }
+      showCloudStatus('✓ Fertig', 'var(--ac)');
+      return;
     }
+
+    const zip = new (JSZip || window.JSZip)();
+    let count = 0;
+    for (let i = 0; i < texts.length; i++) {
+      const pages = await renderTextPages(i);
+      for (const { blob, name } of pages) {
+        const ab = await blob.arrayBuffer();
+        zip.file(name, ab);
+        count++;
+      }
+    }
+    if (!count) { showCloudStatus('Kein Inhalt', 'var(--mu)'); return; }
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    downloadBlob(zipBlob, `${opts.label.toLowerCase().replace(/\s/g,'-')}-pngs.zip`);
+    showCloudStatus(`✓ ${count} PNGs als ZIP`, 'var(--ac)');
   };
 
   // Keyboard/pedal cues only for conductor namespace, and only when not typing in a field
