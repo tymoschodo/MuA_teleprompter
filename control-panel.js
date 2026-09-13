@@ -324,7 +324,10 @@ function initPanel(opts) {
   }
 
   window.saveStyleEdit = function() {
-    if (selStyleIdx < 0 || selStyleIdx >= styles.length) return;
+    if (selStyleIdx < 0 || selStyleIdx >= styles.length) {
+      console.warn('[saveStyleEdit] selStyleIdx out of range:', selStyleIdx, 'styles.length:', styles.length);
+      return;
+    }
     const st = styles[selStyleIdx];
     const gv = id => { const e=document.getElementById(id); return e?e.value:null; };
     const gc = id => { const e=document.getElementById(id); return e?e.checked:false; };
@@ -349,7 +352,12 @@ function initPanel(opts) {
     st.posY      = gv('stPosY') !== null ? +gv('stPosY') : st.posY;
     if (ga('stColorSwatches')) st.textColor = ga('stColorSwatches');
     if (ga('stBgSwatches'))    st.bgColor   = ga('stBgSwatches');
+    console.log('[saveStyleEdit] saving style:', st.name, 'size:', st.size, 'italic:', st.italic, 'weight:', st.weight);
+    // Verify it's in localStorage after save
     saveStyles();
+    const check = JSON.parse(localStorage.getItem('tp_styles')||'[]');
+    const found = check.find(s=>String(s.id)===String(st.id));
+    console.log('[saveStyleEdit] verified in localStorage - size:', found?.size, 'italic:', found?.italic);
   };
 
   window.addStyle = function() {
@@ -615,7 +623,12 @@ function initPanel(opts) {
   async function renderTextPages(idx) {
     const t = texts[idx]; if (!t||(!(t.content||'').trim())) return [];
     const r = resolveForText(t);
-    console.log('[PNG] text:', t.title, 'styleId:', t.styleId, 'resolved size:', r.size, 'italic:', r.italic, 'font:', r.font, 'bgColor:', r.bgColor);
+    // Debug: show resolved values visibly
+    const _styles = JSON.parse(localStorage.getItem('tp_styles')||'[]');
+    const _st = t.styleId ? _styles.find(s=>String(s.id)===String(t.styleId)) : null;
+    const _dbg = `TEXT: "${t.title}"\nstyleId: ${t.styleId}\nStyle found: ${_st ? _st.name : 'NONE (using defaults)'}\nResolved size: ${r.size}px\nResolved italic: ${r.italic}\nResolved font: ${r.font}\nResolved weight: ${r.weight}\nResolved bgColor: ${r.bgColor}`;
+    console.log('[PNG Debug]', _dbg);
+    alert(_dbg);
     const SCALE = PNG_W/1920;
     const fontSize = Math.round((r.size||72)*SCALE);
     const padding  = Math.round((r.pad??80)*SCALE);
