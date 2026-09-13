@@ -101,6 +101,39 @@ function broadcast(msg){
   localStorage.setItem(S+'msg',JSON.stringify(full));
   if(window.__fb) window.__fb.fbBroadcast(S, full);
 }
+
+function resolveForCue(t) {
+  const styles = JSON.parse(localStorage.getItem('tp_styles')||'[]');
+  const st = (t && t.styleId) ? styles.find(s => String(s.id)===String(t.styleId)) : null;
+  const D = {
+    font:"'Syne',sans-serif", size:72, weight:'700', italic:false, underline:false,
+    textColor:'#000000', bgColor:'#ffffff', align:'left', pad:80, lineH:1.6,
+    mirror:false, mode:'scroll', dir:'up', speed:60, keepText:false,
+    duration:5, posX:50, posY:50, fade:0.5,
+  };
+  function pv(stVal, defVal) { return (st && stVal !== null && stVal !== undefined) ? stVal : defVal; }
+  return {
+    font:      pv(st&&st.font,      D.font),
+    size:      pv(st&&st.size,      D.size),
+    weight:    pv(st&&st.weight,    D.weight),
+    italic:    pv(st&&st.italic,    D.italic),
+    underline: pv(st&&st.underline, D.underline),
+    textColor: pv(st&&st.textColor, D.textColor),
+    bgColor:   pv(st&&st.bgColor,   D.bgColor),
+    align:     pv(st&&st.align,     D.align),
+    pad:       pv(st&&st.pad,       D.pad),
+    lineH:     pv(st&&st.lineH,     D.lineH),
+    mirror:    pv(st&&st.mirror,    D.mirror),
+    mode:      pv(st&&st.mode,      D.mode),
+    dir:       pv(st&&st.dir,       D.dir),
+    speed:     (t&&t.exc_speed!=null)?+t.exc_speed:pv(st&&st.speed, D.speed),
+    duration:  (t&&t.exc_duration!=null)?+t.exc_duration:pv(st&&st.duration, D.duration),
+    keepText:  pv(st&&st.keepText,  D.keepText),
+    posX:      (t&&t.exc_posX!=null)?+t.exc_posX:pv(st&&st.posX, D.posX),
+    posY:      (t&&t.exc_posY!=null)?+t.exc_posY:pv(st&&st.posY, D.posY),
+    fade:      pv(st&&st.fade,      D.fade),
+  };
+}
 function loadTexts(){const r=localStorage.getItem(S+'texts');texts=r?JSON.parse(r):[];renderList();updateNext();}
 
 function renderList(){
@@ -153,7 +186,8 @@ function doCue(){
   if(target>=texts.length)return;
   activateText(target);
   setState('running');
-  broadcast({type:'cue',idx:curIdx});
+  const resolved = resolveForCue(texts[curIdx]);
+  broadcast({type:'cue', idx:curIdx, resolved});
   startProg();renderList();
 }
 function doBack(){
@@ -195,11 +229,12 @@ function resetProg(){
 }
 function startProg(){
   clearInterval(progInt);
-  const g=getG(),t=texts[curIdx];if(!t)return;
-  const mode=g.mode||'scroll',speed=t.speed||g.speed||60,size=g.size||72,lineH=g.lineH||1.6;
-  const dur=(t.duration||g.duration||5)*1000;
+  const t=texts[curIdx];if(!t)return;
+  const r=resolveForCue(t);
+  const mode=r.mode,speed=r.speed,size=r.size,lineH=r.lineH;
+  const dur=r.duration*1000;
   startTime=Date.now();
-  const fadeDur2=(g.fade||0.5)*1000;
+  const fadeDur2=r.fade*1000;
   const total=mode==='display'
     ? fadeDur2+dur+fadeDur2
     : (()=>{const lines=(t.content||'').split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length/28)),0);return(lines*(size*lineH)/speed)*1000;})();

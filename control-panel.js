@@ -91,7 +91,9 @@ function initPanel(opts) {
 
   // ── RESOLVE: style → defaults ────────────────────────────────────────────
   function resolveForText(t) {
-    const st = (t && t.styleId) ? styles.find(s => s.id === t.styleId) : null;
+    // Always read fresh styles in case they were updated
+    const currentStyles = JSON.parse(localStorage.getItem(STYLES_KEY) || '[]');
+    const st = (t && t.styleId) ? currentStyles.find(s => String(s.id) === String(t.styleId)) : null;
     const D = DEFAULTS;
     function pv(stVal, defVal) {
       // style value wins if not null/undefined
@@ -361,7 +363,7 @@ function initPanel(opts) {
     if (!confirm(`Stil "${styles[selStyleIdx].name}" löschen?`)) return;
     const id = styles[selStyleIdx].id;
     styles.splice(selStyleIdx, 1);
-    texts.forEach(t => { if (t.styleId===id) t.styleId=null; });
+    texts.forEach(t => { if (String(t.styleId)===String(id)) t.styleId=null; });
     saveTexts(); saveStyles();
     selStyleIdx = Math.min(selStyleIdx, styles.length-1);
     renderStyleList(); renderStyleEditor(); renderList();
@@ -373,7 +375,7 @@ function initPanel(opts) {
       sel.innerHTML = '<option value="">— Kein Stil (Defaults) —</option>';
       styles.forEach(st => {
         const opt = document.createElement('option');
-        opt.value = st.id; opt.textContent = st.name;
+        opt.value = String(st.id); opt.textContent = st.name;
         sel.appendChild(opt);
       });
       sel.value = cur;
@@ -392,7 +394,7 @@ function initPanel(opts) {
       const isCur = i===curCueIdx;
       const cls = isCur?'active':t.status==='done'?'done':'waiting';
       const icon = isCur?(state==='running'?'►':'·'):t.status==='done'?'✓':'';
-      const st = t.styleId ? styles.find(s=>s.id===t.styleId) : null;
+      const st = t.styleId ? styles.find(s=>String(s.id)===String(t.styleId)) : null;
       const badge = st ? `<span class="tspd" style="color:var(--ac2);max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(st.name)}</span>` : '';
       const d = document.createElement('div');
       d.className = 'ti'+(i===selIdx?' sel':'')+' '+cls;
@@ -465,7 +467,7 @@ function initPanel(opts) {
     t.cue     = document.getElementById('eCue').value;
     t.content = document.getElementById('eContent').value;
     const sd = document.getElementById('eStyle');
-    if (sd) t.styleId = sd.value || null;
+    if (sd) t.styleId = sd.value ? sd.value : null;
     const speedActive = document.getElementById('eSpeedActive');
     t.exc_speed    = speedActive&&speedActive.checked ? +document.getElementById('eSpeed').value : null;
     const durActive = document.getElementById('eDurActive');

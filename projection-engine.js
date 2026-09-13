@@ -17,28 +17,17 @@ function initProjection(opts) {
 
   function getT() { return JSON.parse(localStorage.getItem(S+'texts') ||'[]'); }
 
+  let lastResolved = null; // fully resolved settings sent with each cue
+
   function resolve() {
-    const g=getG(), t=(texts[idx]||{});
+    if (lastResolved) return lastResolved;
+    // Hardcoded defaults — only used before any cue arrives
     return {
-      font:      g.font      || "'Syne',sans-serif",
-      size:      g.size      || 72,
-      weight:    g.weight    || '700',
-      italic:    g.italic    || false,
-      underline: g.underline || false,
-      align:     g.align     || 'left',
-      pad:       g.pad       !== undefined ? g.pad : 80,
-      mirror:    g.mirror    || false,
-      textColor: g.textColor || opts.defaultColor,
-      bgColor:   g.bgColor   || opts.defaultBg,
-      lineH:     g.lineH     || 1.6,
-      fade:      g.fade      !== undefined ? g.fade : 0.5,
-      mode:      g.mode      || opts.defaultMode,
-      dir:       g.dir       || 'up',
-      speed:     t.speed     || g.speed || 60,
-      keepText:  g.keepText  || false,
-      duration:  t.duration  || g.duration || 5,
-      posX: (t.posX !== undefined && t.posX !== null && t.posX !== '') ? +t.posX : (g.posX !== undefined ? +g.posX : 50),
-      posY: (t.posY !== undefined && t.posY !== null && t.posY !== '') ? +t.posY : (g.posY !== undefined ? +g.posY : 50),
+      font:"'Syne',sans-serif", size:72, weight:'700',
+      italic:false, underline:false, align:'left', pad:80, mirror:false,
+      textColor:opts.defaultColor, bgColor:opts.defaultBg,
+      lineH:1.6, fade:0.5, mode:opts.defaultMode, dir:'up',
+      speed:60, keepText:false, duration:5, posX:50, posY:50,
     };
   }
 

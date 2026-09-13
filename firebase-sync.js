@@ -127,7 +127,25 @@ function fbListenSettings(namespace, callback) {
   });
 }
 
-window.__fb = { fbBroadcast, fbListen, fbSyncTexts, fbGetTexts, fbSyncSettings, fbGetSettings, fbListenTexts, fbListenSettings };
+function fbSyncStyles(styles) {
+  whenReady(() => {
+    _db.ref('styles/shared').set({ data: JSON.stringify(styles), ts: Date.now() })
+      .catch(e => console.warn('[Firebase] syncStyles failed:', e));
+  });
+}
+
+function fbGetStyles() {
+  return new Promise((resolve) => {
+    whenReady(() => {
+      _db.ref('styles/shared').once('value').then(snapshot => {
+        const val = snapshot.val();
+        resolve((val && val.data) ? JSON.parse(val.data) : null);
+      }).catch(() => resolve(null));
+    });
+  });
+}
+
+window.__fb = { fbBroadcast, fbListen, fbSyncTexts, fbGetTexts, fbSyncSettings, fbGetSettings, fbListenTexts, fbListenSettings, fbSyncStyles, fbGetStyles };
 
 // Init — defer slightly to ensure compat scripts are fully parsed
 if (typeof firebase !== 'undefined') {
