@@ -47,6 +47,8 @@ function syncPosPickerToValues(gridId, xId, yId) {
   });
 }
 
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
 // ── MAIN PANEL ──────────────────────────────────────────────────────────────
 function initPanel(opts) {
   const S = opts.namespace;
@@ -746,8 +748,6 @@ function initPanel(opts) {
   }
 
   // ── INIT ───────────────────────────────────────────────────────────────────
-  function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-
   const rawTexts=localStorage.getItem(S+'texts');
   texts=rawTexts?JSON.parse(rawTexts):null;
   if(!texts){
