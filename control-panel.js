@@ -244,13 +244,13 @@ function initPanel(opts) {
           <label>Geschwindigkeit</label>
           <div class="rrow">
             <input type="range" id="stSpeed" min="10" max="300" step="5" value="${st.speed||60}"
-              oninput="saveStyleEdit();document.getElementById('stSpeedVal').textContent=this.value+' px/s'">
+              oninput="document.getElementById('stSpeedVal').textContent=this.value+' px/s';saveStyleEdit()">
             <span class="rval" id="stSpeedVal">${st.speed||60} px/s</span>
           </div>
           <label>Anzeigedauer (Display)</label>
           <div class="rrow">
             <input type="range" id="stDuration" min="1" max="30" step="0.5" value="${st.duration||5}"
-              oninput="saveStyleEdit();document.getElementById('stDurationVal').textContent=parseFloat(this.value).toFixed(1)+'s'">
+              oninput="document.getElementById('stDurationVal').textContent=parseFloat(this.value).toFixed(1)+'s';saveStyleEdit()">
             <span class="rval" id="stDurationVal">${parseFloat(st.duration||5).toFixed(1)}s</span>
           </div>
         </div>
@@ -262,7 +262,7 @@ function initPanel(opts) {
           <label>Schriftgröße</label>
           <div class="rrow">
             <input type="range" id="stSize" min="24" max="400" step="2" value="${st.size||72}"
-              oninput="saveStyleEdit();document.getElementById('stSizeVal').textContent=this.value+'px'">
+              oninput="document.getElementById('stSizeVal').textContent=this.value+'px';saveStyleEdit()">
             <span class="rval" id="stSizeVal">${st.size||72}px</span>
           </div>
           <label>Gewicht</label>
@@ -296,13 +296,13 @@ function initPanel(opts) {
           <label style="margin-top:0">Horizontal</label>
           <div class="rrow">
             <input type="range" id="stPosX" min="0" max="100" step="1" value="${st.posX??50}"
-              oninput="saveStyleEdit();document.getElementById('stPosXVal').textContent=this.value+'%';syncPosPickerToValues('stPosPicker','stPosX','stPosY')">
+              oninput="document.getElementById('stPosXVal').textContent=this.value+'%';syncPosPickerToValues('stPosPicker','stPosX','stPosY');saveStyleEdit()">
             <span class="rval" id="stPosXVal">${st.posX??50}%</span>
           </div>
           <label>Vertikal</label>
           <div class="rrow">
             <input type="range" id="stPosY" min="0" max="100" step="1" value="${st.posY??50}"
-              oninput="saveStyleEdit();document.getElementById('stPosYVal').textContent=this.value+'%';syncPosPickerToValues('stPosPicker','stPosX','stPosY')">
+              oninput="document.getElementById('stPosYVal').textContent=this.value+'%';syncPosPickerToValues('stPosPicker','stPosX','stPosY');saveStyleEdit()">
             <span class="rval" id="stPosYVal">${st.posY??50}%</span>
           </div>
         </div>
@@ -350,8 +350,6 @@ function initPanel(opts) {
     if(ga('stColorSwatches')) st.textColor = ga('stColorSwatches');
     if(ga('stBgSwatches'))    st.bgColor   = ga('stBgSwatches');
     saveStyles();
-    renderStyleList();
-    rebuildStyleDropdowns();
   };
 
   window.addStyle = function() {

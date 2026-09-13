@@ -136,17 +136,17 @@
         </select>
         <label>Standardgeschwindigkeit</label>
         <div class="rrow">
-          <input type="range" id="sSpeed" min="10" max="300" step="5" value="60" oninput="saveGlobal();document.getElementById('sSpeedVal').textContent=this.value+' px/s'">
+          <input type="range" id="sSpeed" min="10" max="300" step="5" value="60" oninput="document.getElementById('sSpeedVal').textContent=this.value+' px/s';saveGlobal()">
           <span class="rval" id="sSpeedVal">60 px/s</span>
         </div>
         <label>Einblenddauer</label>
         <div class="rrow">
-          <input type="range" id="sFade" min="0.1" max="3" step="0.1" value="0.5" oninput="saveGlobal();document.getElementById('sFadeVal').textContent=parseFloat(this.value).toFixed(1)+'s'">
+          <input type="range" id="sFade" min="0.1" max="3" step="0.1" value="0.5" oninput="document.getElementById('sFadeVal').textContent=parseFloat(this.value).toFixed(1)+'s';saveGlobal()">
           <span class="rval" id="sFadeVal">0.5s</span>
         </div>
         <label>Standard-Anzeigedauer</label>
         <div class="rrow">
-          <input type="range" id="sDuration" min="1" max="30" step="0.5" value="5" oninput="saveGlobal();document.getElementById('sDurationVal').textContent=parseFloat(this.value).toFixed(1)+'s'">
+          <input type="range" id="sDuration" min="1" max="30" step="0.5" value="5" oninput="document.getElementById('sDurationVal').textContent=parseFloat(this.value).toFixed(1)+'s';saveGlobal()">
           <span class="rval" id="sDurationVal">5.0s</span>
         </div>
         <div class="trow">
@@ -180,7 +180,7 @@
         </select>
         <label>Schriftgröße</label>
         <div class="rrow">
-          <input type="range" id="sSize" min="24" max="400" step="2" value="72" oninput="saveGlobal();document.getElementById('sSizeVal').textContent=this.value+'px'">
+          <input type="range" id="sSize" min="24" max="400" step="2" value="72" oninput="document.getElementById('sSizeVal').textContent=this.value+'px';saveGlobal()">
           <span class="rval" id="sSizeVal">72px</span>
         </div>
         <label>Gewicht</label>
@@ -201,7 +201,7 @@
         </div>
         <label>Zeilenabstand</label>
         <div class="rrow">
-          <input type="range" id="sLineH" min="10" max="30" step="1" value="16" oninput="saveGlobal();document.getElementById('sLineHVal').textContent=(this.value/10).toFixed(1)">
+          <input type="range" id="sLineH" min="10" max="30" step="1" value="16" oninput="document.getElementById('sLineHVal').textContent=(this.value/10).toFixed(1);saveGlobal()">
           <span class="rval" id="sLineHVal">1.6</span>
         </div>
         <label>Ausrichtung</label>
@@ -210,7 +210,7 @@
         </select>
         <label>Seitenränder</label>
         <div class="rrow">
-          <input type="range" id="sPad" min="0" max="300" step="10" value="80" oninput="saveGlobal();document.getElementById('sPadVal').textContent=this.value+'px'">
+          <input type="range" id="sPad" min="0" max="300" step="10" value="80" oninput="document.getElementById('sPadVal').textContent=this.value+'px';saveGlobal()">
           <span class="rval" id="sPadVal">80px</span>
         </div>
       </div>
@@ -230,12 +230,12 @@
       <div class="pos-sliders">
         <label style="margin-top:0">Horizontal</label>
         <div class="rrow">
-          <input type="range" id="sPosX" min="0" max="100" step="1" value="50" oninput="saveGlobal();document.getElementById('sPosXVal').textContent=this.value+'%';syncPosPickerToValues('sPosPicker','sPosX','sPosY')">
+          <input type="range" id="sPosX" min="0" max="100" step="1" value="50" oninput="document.getElementById('sPosXVal').textContent=this.value+'%';syncPosPickerToValues('sPosPicker','sPosX','sPosY');saveGlobal()">
           <span class="rval" id="sPosXVal">50%</span>
         </div>
         <label>Vertikal</label>
         <div class="rrow">
-          <input type="range" id="sPosY" min="0" max="100" step="1" value="50" oninput="saveGlobal();document.getElementById('sPosYVal').textContent=this.value+'%';syncPosPickerToValues('sPosPicker','sPosX','sPosY')">
+          <input type="range" id="sPosY" min="0" max="100" step="1" value="50" oninput="document.getElementById('sPosYVal').textContent=this.value+'%';syncPosPickerToValues('sPosPicker','sPosX','sPosY');saveGlobal()">
           <span class="rval" id="sPosYVal">50%</span>
         </div>
       </div>
