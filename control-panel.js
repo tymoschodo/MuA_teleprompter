@@ -350,19 +350,31 @@ function initPanel(opts) {
   }
 
   async function renderTextPages(idx) {
-    // Returns array of {blob, name} for each page of text idx
     const t = texts[idx];
     if (!t || !(t.content||'').trim()) return [];
     const g = getG();
 
-    const bgColor    = g.bgColor   || opts.defaultBg;
-    const textColor  = g.textColor || opts.defaultColor;
-    const fontSize   = g.size      || 72;
-    const rawFont    = (g.font     || "'Syne',sans-serif").replace(/'/g, '');
-    const fontWeight = g.weight    || '700';
-    const lineHeightM= g.lineH     || 1.6;
-    const padding    = g.pad       !== undefined ? g.pad : 80;
-    const align      = g.align     || 'left';
+    const bgColor    = g.bgColor    || opts.defaultBg;
+    const textColor  = g.textColor  || opts.defaultColor;
+    const fontWeight = g.weight     || '700';
+    const lineHeightM= g.lineH      || 1.6;
+    const align      = g.align      || 'left';
+    const rawFont    = (g.font      || "'Syne',sans-serif").replace(/'/g,'');
+
+    // The projection renders at screen width (e.g. 1920px) with a given font size.
+    // We need to scale everything up proportionally to PNG_W (3840px).
+    // Reference width: what the projection "sees" — use PNG_W as the reference
+    // so the PNG matches a 3840px-wide projection exactly.
+    // Scale factor vs a standard 1920px display = 2x
+    const SCALE     = PNG_W / 1920;
+    const fontSize  = Math.round((g.size || 72) * SCALE);
+    const padding   = Math.round((g.pad  !== undefined ? g.pad : 80) * SCALE);
+
+    // Per-text position override or global
+    const hasPosX   = t.posX !== null && t.posX !== undefined && t.posX !== '';
+    const hasPosY   = t.posY !== null && t.posY !== undefined && t.posY !== '';
+    const posX      = hasPosX ? +t.posX : (g.posX !== undefined ? +g.posX : null);
+    const posY      = hasPosY ? +t.posY : (g.posY !== undefined ? +g.posY : null);
 
     const canvas = document.createElement('canvas');
     canvas.width  = PNG_W;
@@ -371,14 +383,13 @@ function initPanel(opts) {
 
     try { await document.fonts.ready; } catch(e) {}
 
-    const fontStr  = `${fontWeight} ${fontSize}px ${rawFont}`;
-    ctx.font = fontStr;
+    const fontStr = `${fontWeight} ${fontSize}px ${rawFont}`;
+    ctx.font      = fontStr;
 
     const lineH    = Math.round(fontSize * lineHeightM);
     const maxWidth = PNG_W - padding * 2;
     const maxLines = Math.floor((PNG_H - padding * 2) / lineH);
 
-    // Word-wrap
     function wrapText(text) {
       const lines = [];
       for (const para of text.split('\n')) {
@@ -401,18 +412,44 @@ function initPanel(opts) {
     if (!pages.length) return [];
 
     const baseName = sanitizeFilename(t.title);
-    const result = [];
+    const result   = [];
 
     for (let p = 0; p < pages.length; p++) {
       ctx.clearRect(0, 0, PNG_W, PNG_H);
+
+      // Background
       ctx.fillStyle = bgColor;
       ctx.fillRect(0, 0, PNG_W, PNG_H);
-      ctx.fillStyle = textColor;
-      ctx.font = fontStr;
-      ctx.textAlign = align === 'center' ? 'center' : align === 'right' ? 'right' : 'left';
-      const x = align === 'center' ? PNG_W/2 : align === 'right' ? PNG_W-padding : padding;
-      let y = padding + fontSize;
-      for (const line of pages[p]) { ctx.fillText(line, x, y); y += lineH; }
+
+      // Text
+      ctx.fillStyle  = textColor;
+      ctx.font       = fontStr;
+      ctx.textAlign  = align === 'center' ? 'center' : align === 'right' ? 'right' : 'left';
+
+      // X position
+      const x = align === 'center' ? PNG_W/2
+              : align === 'right'  ? PNG_W - padding
+              : padding;
+
+      // Y position — match the projection's display mode positioning
+      const pageLines = pages[p];
+      const totalTextH = pageLines.length * lineH;
+
+      let startY;
+      if (posY !== null) {
+        // Position picker: posY% of (canvas height - text block height)
+        startY = Math.round((posY/100) * (PNG_H - totalTextH)) + fontSize;
+      } else {
+        // Default: vertically centered (matches display mode default)
+        startY = Math.round((PNG_H - totalTextH) / 2) + fontSize;
+      }
+
+      let y = startY;
+      for (const line of pageLines) {
+        ctx.fillText(line, x, y);
+        y += lineH;
+      }
+
       const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
       const name = pages.length > 1 ? `${baseName}-${p+1}.png` : `${baseName}.png`;
       result.push({ blob, name });
