@@ -79,6 +79,7 @@ function initProjection(opts) {
   function startText(idx) {
     clearAll(); curIdx=idx; paused=false; stopped=false;
     const s=resolve();
+    console.log('[Projection] cue', idx, 'italic:', s.italic, 'font:', s.font, 'size:', s.size, 'weight:', s.weight, 'full resolved:', JSON.stringify(s));
     applyVisual(s);
     content.textContent=texts[idx]?(texts[idx].content||''):'';
     if(tag) tag.textContent=`${idx+1} / ${texts.length}`;

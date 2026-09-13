@@ -615,6 +615,7 @@ function initPanel(opts) {
   async function renderTextPages(idx) {
     const t = texts[idx]; if (!t||(!(t.content||'').trim())) return [];
     const r = resolveForText(t);
+    console.log('[PNG] text:', t.title, 'styleId:', t.styleId, 'resolved size:', r.size, 'italic:', r.italic, 'font:', r.font, 'bgColor:', r.bgColor);
     const SCALE = PNG_W/1920;
     const fontSize = Math.round((r.size||72)*SCALE);
     const padding  = Math.round((r.pad??80)*SCALE);
