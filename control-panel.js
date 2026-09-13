@@ -95,30 +95,33 @@ function initPanel(opts) {
     const currentStyles = JSON.parse(localStorage.getItem(STYLES_KEY) || '[]');
     const st = (t && t.styleId) ? currentStyles.find(s => String(s.id) === String(t.styleId)) : null;
     const D = DEFAULTS;
-    function pv(stVal, defVal) {
-      // style value wins if not null/undefined
-      return (st && stVal !== null && stVal !== undefined) ? stVal : defVal;
+    // sv: use style value if style exists and field is set, else use default
+    function sv(field, defVal) {
+      if (!st) return defVal;
+      const v = st[field];
+      if (v === null || v === undefined) return defVal;
+      return v;
     }
     return {
-      font:      pv(st&&st.font,      D.font),
-      size:      pv(st&&st.size,      D.size),
-      weight:    pv(st&&st.weight,    D.weight),
-      italic:    pv(st&&st.italic,    D.italic),
-      underline: pv(st&&st.underline, D.underline),
-      textColor: pv(st&&st.textColor, D.textColor),
-      bgColor:   pv(st&&st.bgColor,   D.bgColor),
-      align:     pv(st&&st.align,     D.align),
-      pad:       pv(st&&st.pad,       D.pad),
-      lineH:     pv(st&&st.lineH,     D.lineH),
-      mirror:    pv(st&&st.mirror,    D.mirror),
-      mode:      pv(st&&st.mode,      D.mode),
-      dir:       pv(st&&st.dir,       D.dir),
-      speed:     (t&&t.exc_speed!=null) ? +t.exc_speed   : pv(st&&st.speed,    D.speed),
-      duration:  (t&&t.exc_duration!=null) ? +t.exc_duration : pv(st&&st.duration, D.duration),
-      keepText:  pv(st&&st.keepText,  D.keepText),
-      posX:      (t&&t.exc_posX!=null) ? +t.exc_posX : pv(st&&st.posX, D.posX),
-      posY:      (t&&t.exc_posY!=null) ? +t.exc_posY : pv(st&&st.posY, D.posY),
-      fade:      pv(st&&st.fade,      D.fade),
+      font:      sv('font',      D.font),
+      size:      sv('size',      D.size),
+      weight:    sv('weight',    D.weight),
+      italic:    !!sv('italic',    D.italic),
+      underline: !!sv('underline', D.underline),
+      textColor: sv('textColor', D.textColor),
+      bgColor:   sv('bgColor',   D.bgColor),
+      align:     sv('align',     D.align),
+      pad:       sv('pad',       D.pad),
+      lineH:     sv('lineH',     D.lineH),
+      mirror:    !!sv('mirror',  D.mirror),
+      keepText:  !!sv('keepText',D.keepText),
+      mode:      sv('mode',      D.mode),
+      dir:       sv('dir',       D.dir),
+      speed:     (t&&t.exc_speed!=null)    ? +t.exc_speed    : sv('speed',    D.speed),
+      duration:  (t&&t.exc_duration!=null) ? +t.exc_duration : sv('duration', D.duration),
+      posX:      (t&&t.exc_posX!=null)     ? +t.exc_posX     : sv('posX',     D.posX),
+      posY:      (t&&t.exc_posY!=null)     ? +t.exc_posY     : sv('posY',     D.posY),
+      fade:      sv('fade',      D.fade),
     };
   }
   window.resolveForText = resolveForText;
@@ -238,7 +241,7 @@ function initPanel(opts) {
           <select id="stFont" onchange="saveStyleEdit()">
             ${fonts.map(([v,l]) => `<option value="${v}" ${st.font===v?'selected':''}>${l}</option>`).join('')}
           </select>
-          <label>Schriftgröße</label>
+          <label>Schriftgröße (bei 1920px Breite)</label>
           <div class="rrow">
             <input type="range" id="stSize" min="24" max="400" step="2" value="${st.size||72}"
               oninput="document.getElementById('stSizeVal').textContent=this.value+'px';saveStyleEdit()">
@@ -616,7 +619,7 @@ function initPanel(opts) {
     const fontSize = Math.round((r.size||72)*SCALE);
     const padding  = Math.round((r.pad??80)*SCALE);
     const lineHeightM = r.lineH||1.6;
-    const fontStr  = `${r.italic?'italic ':''} ${r.weight||'700'} ${fontSize}px ${(r.font||"'Syne',sans-serif").replace(/'/g,'')}`;
+    const fontStr  = `${r.italic?'italic ':''} ${r.weight||'700'} ${fontSize}px ${(r.font||"'Syne',sans-serif").replace(/'/g,'')}`.trim();
     const canvas   = document.createElement('canvas');
     canvas.width   = PNG_W; canvas.height = PNG_H;
     const ctx      = canvas.getContext('2d');

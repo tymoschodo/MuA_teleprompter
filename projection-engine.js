@@ -31,18 +31,24 @@ function initProjection(opts) {
     };
   }
 
+  const REF_WIDTH = 1920; // reference screen width the size slider is calibrated against
+
   function applyVisual(s) {
     document.body.style.background = s.bgColor;
     stage.style.background          = s.bgColor;
     content.style.fontFamily        = s.font;
-    content.style.fontSize          = s.size+'px';
+    // Scale font size proportionally to screen width so it looks the same on any display
+    const scaledSize = ((s.size / REF_WIDTH) * window.innerWidth).toFixed(2);
+    content.style.fontSize          = scaledSize + 'px';
     content.style.lineHeight        = s.lineH;
     content.style.color             = s.textColor;
     content.style.fontWeight        = s.weight;
     content.style.fontStyle         = s.italic    ? 'italic' : 'normal';
     content.style.textDecoration    = s.underline ? 'underline' : 'none';
     content.style.textAlign         = s.align;
-    content.style.padding           = `0 ${s.pad}px`;
+    // Also scale padding proportionally
+    const scaledPad = Math.round((s.pad / REF_WIDTH) * window.innerWidth);
+    content.style.padding           = `0 ${scaledPad}px`;
     content.style.transform         = s.mirror ? 'scaleX(-1)' : '';
   }
 

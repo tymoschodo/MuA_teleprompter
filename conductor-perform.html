@@ -111,27 +111,32 @@ function resolveForCue(t) {
     mirror:false, mode:'scroll', dir:'up', speed:60, keepText:false,
     duration:5, posX:50, posY:50, fade:0.5,
   };
-  function pv(stVal, defVal) { return (st && stVal !== null && stVal !== undefined) ? stVal : defVal; }
+  function sv(field, defVal) {
+    if (!st) return defVal;
+    const v = st[field];
+    if (v === null || v === undefined) return defVal;
+    return v;
+  }
   return {
-    font:      pv(st&&st.font,      D.font),
-    size:      pv(st&&st.size,      D.size),
-    weight:    pv(st&&st.weight,    D.weight),
-    italic:    pv(st&&st.italic,    D.italic),
-    underline: pv(st&&st.underline, D.underline),
-    textColor: pv(st&&st.textColor, D.textColor),
-    bgColor:   pv(st&&st.bgColor,   D.bgColor),
-    align:     pv(st&&st.align,     D.align),
-    pad:       pv(st&&st.pad,       D.pad),
-    lineH:     pv(st&&st.lineH,     D.lineH),
-    mirror:    pv(st&&st.mirror,    D.mirror),
-    mode:      pv(st&&st.mode,      D.mode),
-    dir:       pv(st&&st.dir,       D.dir),
-    speed:     (t&&t.exc_speed!=null)?+t.exc_speed:pv(st&&st.speed, D.speed),
-    duration:  (t&&t.exc_duration!=null)?+t.exc_duration:pv(st&&st.duration, D.duration),
-    keepText:  pv(st&&st.keepText,  D.keepText),
-    posX:      (t&&t.exc_posX!=null)?+t.exc_posX:pv(st&&st.posX, D.posX),
-    posY:      (t&&t.exc_posY!=null)?+t.exc_posY:pv(st&&st.posY, D.posY),
-    fade:      pv(st&&st.fade,      D.fade),
+    font:      sv('font',      D.font),
+    size:      sv('size',      D.size),
+    weight:    sv('weight',    D.weight),
+    italic:    !!sv('italic',    D.italic),
+    underline: !!sv('underline', D.underline),
+    textColor: sv('textColor', D.textColor),
+    bgColor:   sv('bgColor',   D.bgColor),
+    align:     sv('align',     D.align),
+    pad:       sv('pad',       D.pad),
+    lineH:     sv('lineH',     D.lineH),
+    mirror:    !!sv('mirror',  D.mirror),
+    keepText:  !!sv('keepText',D.keepText),
+    mode:      sv('mode',      D.mode),
+    dir:       sv('dir',       D.dir),
+    speed:     (t&&t.exc_speed!=null)?+t.exc_speed:sv('speed', D.speed),
+    duration:  (t&&t.exc_duration!=null)?+t.exc_duration:sv('duration', D.duration),
+    posX:      (t&&t.exc_posX!=null)?+t.exc_posX:sv('posX', D.posX),
+    posY:      (t&&t.exc_posY!=null)?+t.exc_posY:sv('posY', D.posY),
+    fade:      sv('fade',      D.fade),
   };
 }
 function loadTexts(){const r=localStorage.getItem(S+'texts');texts=r?JSON.parse(r):[];renderList();updateNext();}
