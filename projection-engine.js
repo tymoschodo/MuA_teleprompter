@@ -24,6 +24,8 @@ function initProjection(opts) {
       font:      g.font      || "'Syne',sans-serif",
       size:      g.size      || 72,
       weight:    g.weight    || '700',
+      italic:    g.italic    || false,
+      underline: g.underline || false,
       align:     g.align     || 'left',
       pad:       g.pad       !== undefined ? g.pad : 80,
       mirror:    g.mirror    || false,
@@ -49,6 +51,8 @@ function initProjection(opts) {
     content.style.lineHeight        = s.lineH;
     content.style.color             = s.textColor;
     content.style.fontWeight        = s.weight;
+    content.style.fontStyle         = s.italic    ? 'italic' : 'normal';
+    content.style.textDecoration    = s.underline ? 'underline' : 'none';
     content.style.textAlign         = s.align;
     content.style.padding           = `0 ${s.pad}px`;
     content.style.transform         = s.mirror ? 'scaleX(-1)' : '';

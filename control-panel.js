@@ -73,6 +73,8 @@ function initPanel(opts) {
       font:      document.getElementById('sFont').value,
       size:      +document.getElementById('sSize').value,
       weight:    document.getElementById('sWeight').value,
+      italic:    document.getElementById('sItalic')    ? document.getElementById('sItalic').checked    : false,
+      underline: document.getElementById('sUnderline') ? document.getElementById('sUnderline').checked : false,
       align:     document.getElementById('sAlign').value,
       pad:       +document.getElementById('sPad').value,
       fade:      +parseFloat(document.getElementById('sFade').value).toFixed(1),
@@ -131,6 +133,8 @@ function initPanel(opts) {
     if(g.keepText!==undefined) document.getElementById('sKeep').checked=g.keepText;
     if(g.mirror!==undefined)   document.getElementById('sMirror').checked=g.mirror;
     sv('sFont',g.font); sv('sWeight',g.weight); sv('sAlign',g.align);
+    if(g.italic    !== undefined && document.getElementById('sItalic'))    document.getElementById('sItalic').checked    = g.italic;
+    if(g.underline !== undefined && document.getElementById('sUnderline')) document.getElementById('sUnderline').checked = g.underline;
     if(g.size)     { sv('sSize',g.size);        document.getElementById('sSizeVal').textContent=g.size+'px'; }
     if(g.pad!==undefined) { sv('sPad',g.pad);   document.getElementById('sPadVal').textContent=g.pad+'px'; }
     if(g.fade)     { sv('sFade',g.fade);        document.getElementById('sFadeVal').textContent=g.fade+'s'; }
@@ -357,6 +361,8 @@ function initPanel(opts) {
     const bgColor    = g.bgColor    || opts.defaultBg;
     const textColor  = g.textColor  || opts.defaultColor;
     const fontWeight = g.weight     || '700';
+    const italic     = g.italic     || false;
+    const underline  = g.underline  || false;
     const lineHeightM= g.lineH      || 1.6;
     const align      = g.align      || 'left';
     const rawFont    = (g.font      || "'Syne',sans-serif").replace(/'/g,'');
@@ -383,7 +389,7 @@ function initPanel(opts) {
 
     try { await document.fonts.ready; } catch(e) {}
 
-    const fontStr = `${fontWeight} ${fontSize}px ${rawFont}`;
+    const fontStr = `${italic ? 'italic ' : ''}${fontWeight} ${fontSize}px ${rawFont}`;
     ctx.font      = fontStr;
 
     const lineH    = Math.round(fontSize * lineHeightM);
@@ -447,6 +453,11 @@ function initPanel(opts) {
       let y = startY;
       for (const line of pageLines) {
         ctx.fillText(line, x, y);
+        if (underline && line.trim()) {
+          const w = ctx.measureText(line).width;
+          const ux = align === 'center' ? x - w/2 : align === 'right' ? x - w : x;
+          ctx.fillRect(ux, y + Math.round(fontSize * 0.12), w, Math.max(2, Math.round(fontSize * 0.05)));
+        }
         y += lineH;
       }
 

@@ -174,11 +174,19 @@
           <option value="700" selected>700 Bold</option><option value="800">800 ExtraBold</option>
           <option value="900">900 Black</option>
         </select>
+        <div class="trow" style="margin-top:.6rem">
+          <label class="tog"><input type="checkbox" id="sItalic" onchange="saveGlobal()"><span class="tslide"></span></label>
+          <span class="tlbl">Kursiv (Italic)</span>
+        </div>
+        <div class="trow">
+          <label class="tog"><input type="checkbox" id="sUnderline" onchange="saveGlobal()"><span class="tslide"></span></label>
+          <span class="tlbl">Unterstrichen</span>
+        </div>
       </div>
       <div>
         <label style="margin-top:0">Schriftgröße</label>
         <div class="rrow">
-          <input type="range" id="sSize" min="24" max="200" step="2" value="72" oninput="saveGlobal();document.getElementById('sSizeVal').textContent=this.value+'px'">
+          <input type="range" id="sSize" min="24" max="400" step="2" value="72" oninput="saveGlobal();document.getElementById('sSizeVal').textContent=this.value+'px'">
           <span class="rval" id="sSizeVal">72px</span>
         </div>
         <label>Zeilenabstand</label>
