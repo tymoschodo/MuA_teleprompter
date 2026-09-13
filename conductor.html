@@ -24,9 +24,9 @@
       <div class="prog-sub" id="sub">0:00<br>0 / 0</div>
     </div>
     <div class="cue-btns">
-      <button class="btn btn-back"  id="btnBack"  onclick="doBack()"  disabled>◀</button>
-      <button class="btn btn-cue"   id="btnCue"   onclick="doCue()" style="grid-column:span 2">▶ CUE</button>
-      <button class="btn btn-stop"  id="btnStop"  onclick="doStop()"  disabled>⏹</button>
+      <button class="btn btn-back" id="btnBack" onclick="doBack()" disabled>◀</button>
+      <button class="btn btn-cue"  id="btnCue"  onclick="doCue()" style="grid-column:span 2">▶ CUE</button>
+      <button class="btn btn-stop" id="btnStop" onclick="doStop()" disabled>⏹</button>
     </div>
   </div>
   <div class="list-wrap" id="textList"></div>
@@ -36,7 +36,7 @@
     <button class="btn btn-sm" onclick="moveUp()">↑</button>
     <button class="btn btn-sm" onclick="moveDown()">↓</button>
   </div>
-  <div class="hint">Leertaste/Pedal → CUE &nbsp;·&nbsp; ←/Backspace → Zurück</div>
+  <div class="hint">Leertaste/Pedal → CUE &nbsp;·&nbsp; ← → zurück/vor</div>
 </div>
 <div class="main">
 
@@ -51,30 +51,30 @@
     <textarea id="eContent" rows="4" placeholder="Text hier eingeben…" oninput="saveEdit()"></textarea>
     <label>Stil zuweisen</label>
     <select id="eStyle" class="style-select" onchange="saveEdit()">
-      <option value="">— Kein Stil (Global) —</option>
+      <option value="">— Kein Stil (Defaults) —</option>
     </select>
     <hr style="margin:.85rem 0">
     <h2>Ausnahmen (überschreiben den Stil)</h2>
     <div class="two-col">
       <div>
         <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem">
-          <label class="tog" style="margin:0"><input type="checkbox" id="eSpeedActive" onchange="var e=document.getElementById('eSpeed');e.disabled=!this.checked;if(!this.checked){var t=texts[selIdx]||{};e.value=resolveForText(t).speed||60;document.getElementById('eSpeedVal').textContent=e.value+' px/s';}saveEdit()"><span class="tslide"></span></label>
+          <label class="tog" style="margin:0"><input type="checkbox" id="eSpeedActive" onchange="var e=document.getElementById('eSpeed');e.disabled=!this.checked;saveEdit()"><span class="tslide"></span></label>
           <label style="margin:0;font-size:.66rem">Geschwindigkeit</label>
         </div>
         <div class="rrow">
           <input type="range" id="eSpeed" min="10" max="300" step="5" value="60" disabled
-            oninput="saveEdit();document.getElementById('eSpeedVal').textContent=this.value+' px/s'">
+            oninput="document.getElementById('eSpeedVal').textContent=this.value+' px/s';saveEdit()">
           <span class="rval" id="eSpeedVal">60 px/s</span>
         </div>
       </div>
       <div>
         <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem">
-          <label class="tog" style="margin:0"><input type="checkbox" id="eDurActive" onchange="var e=document.getElementById('eDur');e.disabled=!this.checked;if(!this.checked){var t=texts[selIdx]||{};e.value=resolveForText(t).duration||5;document.getElementById('eDurVal').textContent=parseFloat(e.value).toFixed(1)+'s';}saveEdit()"><span class="tslide"></span></label>
+          <label class="tog" style="margin:0"><input type="checkbox" id="eDurActive" onchange="var e=document.getElementById('eDur');e.disabled=!this.checked;saveEdit()"><span class="tslide"></span></label>
           <label style="margin:0;font-size:.66rem">Anzeigedauer</label>
         </div>
         <div class="rrow">
           <input type="range" id="eDur" min="1" max="30" step="0.5" value="5" disabled
-            oninput="saveEdit();document.getElementById('eDurVal').textContent=parseFloat(this.value).toFixed(1)+'s'">
+            oninput="document.getElementById('eDurVal').textContent=parseFloat(this.value).toFixed(1)+'s';saveEdit()">
           <span class="rval" id="eDurVal">5.0s</span>
         </div>
       </div>
@@ -85,18 +85,18 @@
       <span id="ePosStatus" style="font-family:var(--mono);font-size:.6rem;padding:.15rem .5rem;border-radius:3px;border:1px solid var(--bd);color:var(--mu)">Vom Stil</span>
     </div>
     <div class="pos-wrap">
-      <div class="pos-picker" id="ePosPicker"></div>
+      <div class="pos-picker" id="ePosPicker" style="opacity:0.4"></div>
       <div class="pos-sliders">
         <label style="margin-top:0">Horizontal</label>
         <div class="rrow">
           <input type="range" id="ePosX" min="0" max="100" step="1" value="50"
-            oninput="document.getElementById('ePosPicker').style.opacity='1';document.getElementById('ePosStatus').textContent='Individuell';document.getElementById('ePosStatus').style.color='var(--ac2)';document.getElementById('ePosStatus').style.borderColor='var(--ac2)';saveEdit();document.getElementById('ePosXVal').textContent=this.value+'%';syncPosPickerToValues('ePosPicker','ePosX','ePosY')">
+            oninput="document.getElementById('ePosXVal').textContent=this.value+'%';syncPosPickerToValues('ePosPicker','ePosX','ePosY');document.getElementById('ePosPicker').style.opacity='1';document.getElementById('ePosStatus').textContent='Individuell';document.getElementById('ePosStatus').style.color='var(--ac2)';document.getElementById('ePosStatus').style.borderColor='var(--ac2)';saveEdit()">
           <span class="rval" id="ePosXVal">50%</span>
         </div>
         <label>Vertikal</label>
         <div class="rrow">
           <input type="range" id="ePosY" min="0" max="100" step="1" value="50"
-            oninput="document.getElementById('ePosPicker').style.opacity='1';document.getElementById('ePosStatus').textContent='Individuell';document.getElementById('ePosStatus').style.color='var(--ac2)';document.getElementById('ePosStatus').style.borderColor='var(--ac2)';saveEdit();document.getElementById('ePosYVal').textContent=this.value+'%';syncPosPickerToValues('ePosPicker','ePosX','ePosY')">
+            oninput="document.getElementById('ePosYVal').textContent=this.value+'%';syncPosPickerToValues('ePosPicker','ePosX','ePosY');document.getElementById('ePosPicker').style.opacity='1';document.getElementById('ePosStatus').textContent='Individuell';document.getElementById('ePosStatus').style.color='var(--ac2)';document.getElementById('ePosStatus').style.borderColor='var(--ac2)';saveEdit()">
           <span class="rval" id="ePosYVal">50%</span>
         </div>
         <button class="btn btn-sm" style="margin-top:.6rem;width:100%" onclick="clearPosOverride()">↺ Vom Stil verwenden</button>
@@ -117,131 +117,6 @@
     <div id="styleEditor"></div>
   </div>
 
-  <!-- Global settings -->
-  <div class="section">
-    <h2>Globale Einstellungen (Fallback)</h2>
-    <label style="margin-top:0">Modus</label>
-    <div class="mode-tabs">
-      <button class="mtab" id="modeScroll" onclick="setMode('scroll')">Scroll</button>
-      <button class="mtab" id="modeDisplay" onclick="setMode('display')">Display</button>
-    </div>
-    <div class="two-col">
-      <div>
-        <label style="margin-top:0">Richtung</label>
-        <select id="sDir" onchange="saveGlobal()">
-          <option value="up">↑ Unten→Oben</option><option value="down">↓ Oben→Unten</option>
-          <option value="left">← Rechts→Links</option><option value="right">→ Links→Rechts</option>
-          <option value="diag-ul">↖ Diagonal OL</option><option value="diag-ur">↗ Diagonal OR</option>
-          <option value="diag-dl">↙ Diagonal UL</option><option value="diag-dr">↘ Diagonal UR</option>
-        </select>
-        <label>Standardgeschwindigkeit</label>
-        <div class="rrow">
-          <input type="range" id="sSpeed" min="10" max="300" step="5" value="60" oninput="document.getElementById('sSpeedVal').textContent=this.value+' px/s';saveGlobal()">
-          <span class="rval" id="sSpeedVal">60 px/s</span>
-        </div>
-        <label>Einblenddauer</label>
-        <div class="rrow">
-          <input type="range" id="sFade" min="0.1" max="3" step="0.1" value="0.5" oninput="document.getElementById('sFadeVal').textContent=parseFloat(this.value).toFixed(1)+'s';saveGlobal()">
-          <span class="rval" id="sFadeVal">0.5s</span>
-        </div>
-        <label>Standard-Anzeigedauer</label>
-        <div class="rrow">
-          <input type="range" id="sDuration" min="1" max="30" step="0.5" value="5" oninput="document.getElementById('sDurationVal').textContent=parseFloat(this.value).toFixed(1)+'s';saveGlobal()">
-          <span class="rval" id="sDurationVal">5.0s</span>
-        </div>
-        <div class="trow">
-          <label class="tog"><input type="checkbox" id="sKeep" onchange="saveGlobal()"><span class="tslide"></span></label>
-          <span class="tlbl">Text bleibt sichtbar</span>
-        </div>
-        <div class="trow">
-          <label class="tog"><input type="checkbox" id="sMirror" onchange="saveGlobal()"><span class="tslide"></span></label>
-          <span class="tlbl">Spiegeln</span>
-        </div>
-      </div>
-      <div>
-        <label style="margin-top:0">Schriftart</label>
-        <select id="sFont" onchange="saveGlobal()">
-          <option value="'Syne',sans-serif">Syne</option>
-          <option value="'Julius Sans One',sans-serif">Julius Sans One</option>
-          <option value="'Hiragino Sans W0',sans-serif">Hiragino W0</option>
-          <option value="'Hiragino Sans W1',sans-serif">Hiragino W1</option>
-          <option value="'Hiragino Sans W2',sans-serif">Hiragino W2</option>
-          <option value="'Hiragino Sans W3',sans-serif">Hiragino W3</option>
-          <option value="'Hiragino Sans W4',sans-serif">Hiragino W4</option>
-          <option value="'Hiragino Sans W5',sans-serif">Hiragino W5</option>
-          <option value="'Hiragino Sans W6',sans-serif">Hiragino W6</option>
-          <option value="'Hiragino Sans W7',sans-serif">Hiragino W7</option>
-          <option value="'Hiragino Sans W8',sans-serif">Hiragino W8</option>
-          <option value="'Hiragino Sans W9',sans-serif">Hiragino W9</option>
-          <option value="'Space Mono',monospace">Space Mono</option>
-          <option value="Georgia,serif">Georgia</option>
-          <option value="'Helvetica Neue',sans-serif">Helvetica Neue</option>
-          <option value="'Arial',sans-serif">Arial</option>
-        </select>
-        <label>Schriftgröße</label>
-        <div class="rrow">
-          <input type="range" id="sSize" min="24" max="400" step="2" value="72" oninput="document.getElementById('sSizeVal').textContent=this.value+'px';saveGlobal()">
-          <span class="rval" id="sSizeVal">72px</span>
-        </div>
-        <label>Gewicht</label>
-        <select id="sWeight" onchange="saveGlobal()">
-          <option value="100">100 Thin</option><option value="200">200 ExtraLight</option>
-          <option value="300">300 Light</option><option value="400">400 Regular</option>
-          <option value="500">500 Medium</option><option value="600">600 SemiBold</option>
-          <option value="700" selected>700 Bold</option><option value="800">800 ExtraBold</option>
-          <option value="900">900 Black</option>
-        </select>
-        <div class="trow" style="margin-top:.5rem">
-          <label class="tog"><input type="checkbox" id="sItalic" onchange="saveGlobal()"><span class="tslide"></span></label>
-          <span class="tlbl">Kursiv</span>
-        </div>
-        <div class="trow">
-          <label class="tog"><input type="checkbox" id="sUnderline" onchange="saveGlobal()"><span class="tslide"></span></label>
-          <span class="tlbl">Unterstrichen</span>
-        </div>
-        <label>Zeilenabstand</label>
-        <div class="rrow">
-          <input type="range" id="sLineH" min="10" max="30" step="1" value="16" oninput="document.getElementById('sLineHVal').textContent=(this.value/10).toFixed(1);saveGlobal()">
-          <span class="rval" id="sLineHVal">1.6</span>
-        </div>
-        <label>Ausrichtung</label>
-        <select id="sAlign" onchange="saveGlobal()">
-          <option value="left">Linksbündig</option><option value="center">Zentriert</option><option value="right">Rechtsbündig</option>
-        </select>
-        <label>Seitenränder</label>
-        <div class="rrow">
-          <input type="range" id="sPad" min="0" max="300" step="10" value="80" oninput="document.getElementById('sPadVal').textContent=this.value+'px';saveGlobal()">
-          <span class="rval" id="sPadVal">80px</span>
-        </div>
-      </div>
-    </div>
-    <label>Schnellwahl</label>
-    <div class="bw-row">
-      <button class="bw-btn wob" onclick="setScheme('wob')">Weiß auf Schwarz</button>
-      <button class="bw-btn bow" onclick="setScheme('bow')">Schwarz auf Weiß</button>
-    </div>
-    <label>Textfarbe</label><div class="crow" id="colorSwatches"></div>
-    <label>Hintergrundfarbe</label><div class="crow" id="bgSwatches"></div>
-    <hr style="margin:.85rem 0">
-    <h2>Standard-Position (Display)</h2>
-    <p style="font-family:var(--mono);font-size:.62rem;color:var(--mu);margin-bottom:.75rem">Fallback wenn kein Stil eine Position definiert.</p>
-    <div class="pos-wrap">
-      <div class="pos-picker" id="sPosPicker"></div>
-      <div class="pos-sliders">
-        <label style="margin-top:0">Horizontal</label>
-        <div class="rrow">
-          <input type="range" id="sPosX" min="0" max="100" step="1" value="50" oninput="document.getElementById('sPosXVal').textContent=this.value+'%';syncPosPickerToValues('sPosPicker','sPosX','sPosY');saveGlobal()">
-          <span class="rval" id="sPosXVal">50%</span>
-        </div>
-        <label>Vertikal</label>
-        <div class="rrow">
-          <input type="range" id="sPosY" min="0" max="100" step="1" value="50" oninput="document.getElementById('sPosYVal').textContent=this.value+'%';syncPosPickerToValues('sPosPicker','sPosX','sPosY');saveGlobal()">
-          <span class="rval" id="sPosYVal">50%</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Data -->
   <div class="section" style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
     <h2 style="margin:0">Daten:</h2>
@@ -249,7 +124,7 @@
     <button class="btn btn-sm" onclick="document.getElementById('iFile').click()">↑ Import</button>
     <input type="file" id="iFile" accept=".json" style="display:none" onchange="importData(event)">
     <button class="btn btn-sm btn-dn" onclick="if(confirm('Zurücksetzen?'))initDefaults()">↺ Reset</button>
-    <button class="btn btn-sm" onclick="exportAllAsPNG()" style="border-color:#a0a0ff;color:#a0a0ff">⬇ Alle als PNG</button>
+    <button class="btn btn-sm" onclick="exportAllAsPNG()" style="border-color:#a0a0ff;color:#a0a0ff">⬇ Alle PNG</button>
     <div style="margin-left:auto;display:flex;align-items:center;gap:.5rem">
       <span id="cloudStatus" style="font-family:var(--mono);font-size:.62rem;transition:color .3s"></span>
       <button class="btn btn-sm" onclick="loadFromCloud()" style="border-color:#4a9eff;color:#4a9eff">☁ Laden</button>
@@ -257,14 +132,14 @@
     </div>
   </div>
 
-</div><!-- .main -->
-</div><!-- .page -->
+</div>
+</div>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="firebase-sync.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="control-panel.js"></script>
 <script>
-initPanel({ namespace:"tp_front_", keyboardCues:false, projectionUrl:"projection-front.html", defaultBg:"#ffffff", defaultColor:"#000000", defaultMode:"scroll", label:"Dirigent" });
+initPanel({ namespace:"tp_front_", keyboardCues:true, projectionUrl:"projection-front.html", defaultBg:"#ffffff", defaultColor:"#000000", defaultMode:"scroll", label:"Dirigent" });
 </script>
 </body></html>

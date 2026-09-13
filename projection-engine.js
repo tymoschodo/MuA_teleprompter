@@ -15,10 +15,9 @@ function initProjection(opts) {
 
   setTimeout(()=>{if(hint)hint.style.opacity='0';},3000);
 
-  function getG() { return JSON.parse(localStorage.getItem(S+'global')||'{}'); }
   function getT() { return JSON.parse(localStorage.getItem(S+'texts') ||'[]'); }
 
-  function resolve(idx) {
+  function resolve() {
     const g=getG(), t=(texts[idx]||{});
     return {
       font:      g.font      || "'Syne',sans-serif",
@@ -84,7 +83,7 @@ function initProjection(opts) {
 
   function startText(idx) {
     clearAll(); curIdx=idx; paused=false; stopped=false;
-    const s=resolve(idx);
+    const s=resolve();
     applyVisual(s);
     content.textContent=texts[idx]?(texts[idx].content||''):'';
     if(tag) tag.textContent=`${idx+1} / ${texts.length}`;
@@ -164,7 +163,7 @@ function initProjection(opts) {
       if(m){pausedX=parseFloat(m[1]);pausedY=parseFloat(m[2]);}
       paused=true;
     } else {
-      const s=resolve(curIdx);
+      const s=resolve();
       if(s.mode!=='display'){
         const dx=endPos.x-pausedX,dy=endPos.y-pausedY;
         animDuration=(Math.sqrt(dx*dx+dy*dy)/s.speed)*1000;
@@ -213,15 +212,7 @@ function initProjection(opts) {
       texts = msg.data;
       localStorage.setItem(S+'texts', JSON.stringify(texts));
     }
-    // Apply settings changes live without needing a new cue
-    if(msg.type==='global' && msg.data) {
-      localStorage.setItem(S+'global', JSON.stringify(msg.data));
-      const s = resolve(-1); // resolve with no text index = just global settings
-      document.body.style.background = s.bgColor;
-      if(stage) stage.style.background = s.bgColor;
-      // If text is currently displayed, re-apply visual immediately
-      if(!stopped) applyVisual(s);
-    }
+
   }
 
   // Same-device sync via localStorage
@@ -241,16 +232,7 @@ function initProjection(opts) {
           localStorage.setItem(S+'texts', JSON.stringify(texts));
         }
       });
-      // Fetch latest settings from Firebase on load
-      window.__fb.fbGetSettings(S).then(fbSettings => {
-        if (fbSettings) {
-          localStorage.setItem(S+'global', JSON.stringify(fbSettings));
-          // Re-apply background color immediately
-          const bg = fbSettings.bgColor || opts.defaultBg;
-          document.body.style.background = bg;
-          if(stage) stage.style.background = bg;
-        }
-      });
+
       // Listen for cue messages
       window.__fb.fbListen(S, handleMsg);
     } else {
@@ -268,7 +250,6 @@ function initProjection(opts) {
 
 
   texts=getT();
-  const g=getG();
-  document.body.style.background = g.bgColor || opts.defaultBg;
-  if(stage) stage.style.background = g.bgColor || opts.defaultBg;
+  document.body.style.background = opts.defaultBg;
+  if(stage) stage.style.background = opts.defaultBg;
 }
