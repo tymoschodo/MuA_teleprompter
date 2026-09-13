@@ -97,7 +97,37 @@ function fbGetSettings(namespace) {
   });
 }
 
-window.__fb = { fbBroadcast, fbListen, fbSyncTexts, fbGetTexts, fbSyncSettings, fbGetSettings };
+// Continuous listener for texts — fires whenever texts are updated
+function fbListenTexts(namespace, callback) {
+  whenReady(() => {
+    const path = 'texts/' + namespace.replace(/[^a-zA-Z0-9_]/g, '_');
+    let lastTs = 0;
+    _db.ref(path).on('value', (snapshot) => {
+      const val = snapshot.val();
+      if (!val || !val.data || val.ts <= lastTs) return;
+      lastTs = val.ts;
+      try { callback(JSON.parse(val.data)); } catch(e) {}
+    });
+    console.log('[Firebase] listening texts:', path);
+  });
+}
+
+// Continuous listener for settings
+function fbListenSettings(namespace, callback) {
+  whenReady(() => {
+    const path = 'settings/' + namespace.replace(/[^a-zA-Z0-9_]/g, '_');
+    let lastTs = 0;
+    _db.ref(path).on('value', (snapshot) => {
+      const val = snapshot.val();
+      if (!val || !val.data || val.ts <= lastTs) return;
+      lastTs = val.ts;
+      try { callback(JSON.parse(val.data)); } catch(e) {}
+    });
+    console.log('[Firebase] listening settings:', path);
+  });
+}
+
+window.__fb = { fbBroadcast, fbListen, fbSyncTexts, fbGetTexts, fbSyncSettings, fbGetSettings, fbListenTexts, fbListenSettings };
 
 // Init — defer slightly to ensure compat scripts are fully parsed
 if (typeof firebase !== 'undefined') {

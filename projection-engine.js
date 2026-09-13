@@ -176,6 +176,7 @@ function initProjection(opts) {
 
   function doStop() {
     clearAll(); stopped=true; paused=false;
+    lastResolved=null; // reset so next cue picks up fresh settings
     wrap.style.transition='opacity 0.5s'; wrap.style.opacity='0';
     setTimeout(()=>{
       wrap.style.transition=''; wrap.style.opacity='1';
@@ -187,6 +188,8 @@ function initProjection(opts) {
   function handleMsg(msg) {
     if (!msg) return;
     if(msg.type==='cue') {
+      // Store the fully resolved settings from the conductor
+      if (msg.resolved) lastResolved = msg.resolved;
       const local = getT();
       if (local.length > 0) {
         texts = local;
