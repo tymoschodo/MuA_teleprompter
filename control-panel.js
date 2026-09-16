@@ -117,9 +117,9 @@ function initPanel(opts) {
       keepText:  !!sv('keepText',D.keepText),
       mode:      sv('mode',      D.mode),
       dir:       sv('dir',       D.dir),
-      speed:     (t&&t.exc_speed!=null)    ? +t.exc_speed    : sv('speed',    D.speed),
-      scrollDuration:    sv('scrollDuration',    null),
-      useScrollDuration: !!sv('useScrollDuration', false),
+      speed:          (t&&t.exc_speed!=null)        ? +t.exc_speed        : sv('speed',         D.speed),
+      scrollDuration: (t&&t.exc_scrollDuration!=null) ? +t.exc_scrollDuration : sv('scrollDuration', null),
+      useScrollDuration: (t&&t.exc_scrollDuration!=null) ? true : !!sv('useScrollDuration', false),
       duration:  (t&&t.exc_duration!=null) ? +t.exc_duration : sv('duration', D.duration),
       posX:      (t&&t.exc_posX!=null)     ? +t.exc_posX     : sv('posX',     D.posX),
       posY:      (t&&t.exc_posY!=null)     ? +t.exc_posY     : sv('posY',     D.posY),
@@ -446,23 +446,25 @@ function initPanel(opts) {
 
   function loadExceptions(t) {
     const r = resolveForText(t);
-    // Speed
-    const hasSpeed = t.exc_speed!=null;
+    // Speed override (always visible)
     const eSpeedEl = document.getElementById('eSpeed');
     if (eSpeedEl) {
-      eSpeedEl.value = hasSpeed ? t.exc_speed : r.speed;
-      document.getElementById('eSpeedVal').textContent = eSpeedEl.value+' px/s';
-      document.getElementById('eSpeedActive').checked = hasSpeed;
-      eSpeedEl.disabled = !hasSpeed;
+      eSpeedEl.value = t.exc_speed!=null ? t.exc_speed : '';
+      document.getElementById('eSpeedVal').textContent = t.exc_speed!=null ? t.exc_speed+' px/s' : '(vom Stil)';
     }
-    // Duration
-    const hasDur = t.exc_duration!=null;
+    // Scroll duration override (always visible)
+    const eScrollDurEl = document.getElementById('eScrollDur');
+    if (eScrollDurEl) {
+      eScrollDurEl.value = t.exc_scrollDuration!=null ? t.exc_scrollDuration : '';
+      document.getElementById('eScrollDurVal').textContent = t.exc_scrollDuration!=null ? t.exc_scrollDuration+'s' : '(vom Stil)';
+    }
+    // Display duration (always visible)
     const eDurEl = document.getElementById('eDur');
     if (eDurEl) {
-      eDurEl.value = hasDur ? t.exc_duration : r.duration;
+      eDurEl.value = t.exc_duration!=null ? t.exc_duration : r.duration;
       document.getElementById('eDurVal').textContent = parseFloat(eDurEl.value).toFixed(1)+'s';
-      document.getElementById('eDurActive').checked = hasDur;
-      eDurEl.disabled = !hasDur;
+      document.getElementById('eDurActive').checked = t.exc_duration!=null;
+      eDurEl.disabled = t.exc_duration==null;
     }
     // Position
     const hasPosX = t.exc_posX!=null;
@@ -487,8 +489,15 @@ function initPanel(opts) {
     t.content = document.getElementById('eContent').value;
     const sd = document.getElementById('eStyle');
     if (sd) t.styleId = sd.value ? sd.value : null;
-    const speedActive = document.getElementById('eSpeedActive');
-    t.exc_speed    = speedActive&&speedActive.checked ? +document.getElementById('eSpeed').value : null;
+    // Per-text speed: empty = use style, value = override
+    const eSpeedVal = document.getElementById('eSpeed');
+    const rawSpeed = eSpeedVal ? eSpeedVal.value.trim() : '';
+    t.exc_speed = rawSpeed !== '' && +rawSpeed > 0 ? +rawSpeed : null;
+    // Per-text scroll duration: empty = use style
+    const eScrollDurEl2 = document.getElementById('eScrollDur');
+    const rawScrollDur = eScrollDurEl2 ? eScrollDurEl2.value.trim() : '';
+    t.exc_scrollDuration = rawScrollDur !== '' && +rawScrollDur > 0 ? +rawScrollDur : null;
+    // Display duration
     const durActive = document.getElementById('eDurActive');
     t.exc_duration = durActive&&durActive.checked ? +parseFloat(document.getElementById('eDur').value).toFixed(1) : null;
     const picker = document.getElementById('ePosPicker');
@@ -511,7 +520,7 @@ function initPanel(opts) {
     if (badge) { badge.textContent='Vom Stil'; badge.style.color='var(--mu)'; badge.style.borderColor='var(--bd)'; }
   };
 
-  window.addText  = function() { texts.push({id:Date.now(),title:`Text ${texts.length+1}`,cue:'',content:'',status:'waiting',styleId:null,exc_speed:null,exc_duration:null,exc_posX:null,exc_posY:null}); saveTexts(); renderList(); selectText(texts.length-1); };
+  window.addText  = function() { texts.push({id:Date.now(),title:`Text ${texts.length+1}`,cue:'',content:'',status:'waiting',styleId:null,exc_speed:null,exc_scrollDuration:null,exc_duration:null,exc_posX:null,exc_posY:null}); saveTexts(); renderList(); selectText(texts.length-1); };
   window.delText  = function() { if(texts.length<=1)return; if(!confirm(`"${texts[selIdx].title}" löschen?`))return; texts.splice(selIdx,1); selIdx=Math.min(selIdx,texts.length-1); saveTexts(); renderList(); selectText(selIdx); };
   window.moveUp   = function() { if(selIdx<=0)return; [texts[selIdx-1],texts[selIdx]]=[texts[selIdx],texts[selIdx-1]]; selIdx--; saveTexts(); renderList(); selectText(selIdx); };
   window.moveDown = function() { if(selIdx>=texts.length-1)return; [texts[selIdx],texts[selIdx+1]]=[texts[selIdx+1],texts[selIdx]]; selIdx++; saveTexts(); renderList(); selectText(selIdx); };
@@ -775,7 +784,7 @@ function initPanel(opts) {
   const rawTexts = localStorage.getItem(S+'texts');
   texts = rawTexts ? JSON.parse(rawTexts) : null;
   if (!texts) {
-    texts = Array.from({length:20},(_,i)=>({id:Date.now()+i,title:`Text ${i+1}`,cue:'',content:`Platzhalter für Text ${i+1}.\n\nBitte ersetzen.`,status:'waiting',styleId:null,exc_speed:null,exc_duration:null,exc_posX:null,exc_posY:null}));
+    texts = Array.from({length:20},(_,i)=>({id:Date.now()+i,title:`Text ${i+1}`,cue:'',content:`Platzhalter für Text ${i+1}.\n\nBitte ersetzen.`,status:'waiting',styleId:null,exc_speed:null,exc_scrollDuration:null,exc_duration:null,exc_posX:null,exc_posY:null}));
     saveTexts();
   }
   styles = getStyles();
@@ -794,7 +803,7 @@ function initPanel(opts) {
   setState('idle');
 
   window.initDefaults = function() {
-    texts=Array.from({length:20},(_,i)=>({id:Date.now()+i,title:`Text ${i+1}`,cue:'',content:`Platzhalter für Text ${i+1}.\n\nBitte ersetzen.`,status:'waiting',styleId:null,exc_speed:null,exc_duration:null,exc_posX:null,exc_posY:null}));
+    texts=Array.from({length:20},(_,i)=>({id:Date.now()+i,title:`Text ${i+1}`,cue:'',content:`Platzhalter für Text ${i+1}.\n\nBitte ersetzen.`,status:'waiting',styleId:null,exc_speed:null,exc_scrollDuration:null,exc_duration:null,exc_posX:null,exc_posY:null}));
     saveTexts(); renderList(); selectText(0);
   };
   window.exportData = function() {

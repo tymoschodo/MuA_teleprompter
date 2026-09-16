@@ -54,23 +54,31 @@
       <option value="">— Kein Stil (Defaults) —</option>
     </select>
     <hr style="margin:.85rem 0">
-    <h2>Ausnahmen (überschreiben den Stil)</h2>
-    <div class="two-col">
+    <h2>Individuelle Geschwindigkeit</h2>
+    <p style="font-family:var(--mono);font-size:.62rem;color:var(--mu);margin-bottom:.7rem">Leer lassen = Stil-Einstellung verwenden.</p>
+    <div class="three-col">
       <div>
-        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem">
-          <label class="tog" style="margin:0"><input type="checkbox" id="eSpeedActive" onchange="var e=document.getElementById('eSpeed');e.disabled=!this.checked;saveEdit()"><span class="tslide"></span></label>
-          <label style="margin:0;font-size:.66rem">Geschwindigkeit</label>
-        </div>
+        <label style="margin-top:0">Scroll px/s</label>
         <div class="rrow">
-          <input type="range" id="eSpeed" min="10" max="300" step="5" value="60" disabled
-            oninput="document.getElementById('eSpeedVal').textContent=this.value+' px/s';saveEdit()">
-          <span class="rval" id="eSpeedVal">60 px/s</span>
+          <input type="number" id="eSpeed" min="5" max="500" step="1" placeholder="z.B. 80"
+            style="font-size:.8rem"
+            oninput="document.getElementById('eSpeedVal').textContent=this.value?this.value+' px/s':'(vom Stil)';saveEdit()">
+          <span class="rval" id="eSpeedVal" style="font-size:.7rem">(vom Stil)</span>
+        </div>
+      </div>
+      <div>
+        <label style="margin-top:0">Scroll Dauer (s)</label>
+        <div class="rrow">
+          <input type="number" id="eScrollDur" min="1" max="300" step="1" placeholder="z.B. 30"
+            style="font-size:.8rem"
+            oninput="document.getElementById('eScrollDurVal').textContent=this.value?this.value+'s':'(vom Stil)';saveEdit()">
+          <span class="rval" id="eScrollDurVal" style="font-size:.7rem">(vom Stil)</span>
         </div>
       </div>
       <div>
         <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem">
           <label class="tog" style="margin:0"><input type="checkbox" id="eDurActive" onchange="var e=document.getElementById('eDur');e.disabled=!this.checked;saveEdit()"><span class="tslide"></span></label>
-          <label style="margin:0;font-size:.66rem">Anzeigedauer</label>
+          <label style="margin:0;font-size:.66rem">Anzeigedauer (s)</label>
         </div>
         <div class="rrow">
           <input type="range" id="eDur" min="1" max="30" step="0.5" value="5" disabled
