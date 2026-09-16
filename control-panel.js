@@ -118,6 +118,8 @@ function initPanel(opts) {
       mode:      sv('mode',      D.mode),
       dir:       sv('dir',       D.dir),
       speed:     (t&&t.exc_speed!=null)    ? +t.exc_speed    : sv('speed',    D.speed),
+      scrollDuration:    sv('scrollDuration',    null),
+      useScrollDuration: !!sv('useScrollDuration', false),
       duration:  (t&&t.exc_duration!=null) ? +t.exc_duration : sv('duration', D.duration),
       posX:      (t&&t.exc_posX!=null)     ? +t.exc_posX     : sv('posX',     D.posX),
       posY:      (t&&t.exc_posY!=null)     ? +t.exc_posY     : sv('posY',     D.posY),
@@ -127,7 +129,7 @@ function initPanel(opts) {
   window.resolveForText = resolveForText;
 
   // ── STYLE LIBRARY ──────────────────────────────────────────────────────────
-  const STYLE_FIELDS = ['font','size','weight','italic','underline','textColor','bgColor','align','pad','lineH','mode','dir','speed','keepText','duration','posX','posY','fade','mirror'];
+  const STYLE_FIELDS = ['font','size','weight','italic','underline','textColor','bgColor','align','pad','lineH','mode','dir','speed','keepText','duration','posX','posY','fade','mirror','scrollDuration','useScrollDuration'];
 
   function defaultStyle(name) {
     const s = { id: Date.now()+Math.random(), name: name||'Neuer Stil' };
@@ -209,11 +211,20 @@ function initPanel(opts) {
             <option value="diag-dl" ${st.dir==='diag-dl'?'selected':''}>↙ Diagonal UL</option>
             <option value="diag-dr" ${st.dir==='diag-dr'?'selected':''}>↘ Diagonal UR</option>
           </select>
-          <label>Geschwindigkeit</label>
-          <div class="rrow">
+          <label>Scroll-Steuerung</label>
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem">
+            <label class="tog" style="margin:0"><input type="checkbox" id="stUseScrollDuration" onchange="document.getElementById('stSpeedWrap').style.display=this.checked?'none':'flex';document.getElementById('stScrollDurWrap').style.display=this.checked?'flex':'none';saveStyleEdit()" ${st.useScrollDuration?'checked':''}><span class="tslide"></span></label>
+            <span class="tlbl">Dauer statt Geschwindigkeit</span>
+          </div>
+          <div id="stSpeedWrap" class="rrow" style="display:${st.useScrollDuration?'none':'flex'}">
             <input type="range" id="stSpeed" min="10" max="300" step="5" value="${st.speed||60}"
               oninput="document.getElementById('stSpeedVal').textContent=this.value+' px/s';saveStyleEdit()">
             <span class="rval" id="stSpeedVal">${st.speed||60} px/s</span>
+          </div>
+          <div id="stScrollDurWrap" class="rrow" style="display:${st.useScrollDuration?'flex':'none'}">
+            <input type="range" id="stScrollDuration" min="5" max="120" step="1" value="${st.scrollDuration||30}"
+              oninput="document.getElementById('stScrollDurVal').textContent=this.value+'s';saveStyleEdit()">
+            <span class="rval" id="stScrollDurVal">${st.scrollDuration||30}s</span>
           </div>
           <label>Anzeigedauer (Display)</label>
           <div class="rrow">
@@ -335,7 +346,9 @@ function initPanel(opts) {
     st.name      = gv('stName') || st.name;
     st.mode      = gv('stMode');
     st.dir       = gv('stDir');
-    st.speed     = gv('stSpeed')    ? +gv('stSpeed')    : st.speed;
+    st.speed          = gv('stSpeed')          ? +gv('stSpeed')          : st.speed;
+    st.useScrollDuration = gc('stUseScrollDuration');
+    st.scrollDuration = gv('stScrollDuration') ? +gv('stScrollDuration') : st.scrollDuration;
     st.duration  = gv('stDuration') ? +parseFloat(gv('stDuration')).toFixed(1) : st.duration;
     st.fade      = gv('stFade')     ? +parseFloat(gv('stFade')).toFixed(1)     : st.fade;
     st.keepText  = gc('stKeep');
@@ -352,12 +365,7 @@ function initPanel(opts) {
     st.posY      = gv('stPosY') !== null ? +gv('stPosY') : st.posY;
     if (ga('stColorSwatches')) st.textColor = ga('stColorSwatches');
     if (ga('stBgSwatches'))    st.bgColor   = ga('stBgSwatches');
-    console.log('[saveStyleEdit] saving style:', st.name, 'size:', st.size, 'italic:', st.italic, 'weight:', st.weight);
-    // Verify it's in localStorage after save
     saveStyles();
-    const check = JSON.parse(localStorage.getItem('tp_styles')||'[]');
-    const found = check.find(s=>String(s.id)===String(st.id));
-    console.log('[saveStyleEdit] verified in localStorage - size:', found?.size, 'italic:', found?.italic);
   };
 
   window.addStyle = function() {
@@ -572,15 +580,30 @@ function initPanel(opts) {
     const t = texts[curCueIdx]; if (!t) return;
     const r = resolveForText(t);
     const mode  = r.mode;
-    const speed = r.speed;
     const size  = r.size;
     const lineH = r.lineH;
     const dur   = r.duration * 1000;
     const fade  = r.fade * 1000;
-    const total = mode==='display'
-      ? fade + dur + fade
-      : (()=>{ const lines=(t.content||'').split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length/28)),0); return (lines*(size*lineH)/speed)*1000; })();
-    const entryDelay = mode==='display' ? 0 : Math.round((window.innerHeight||800)/speed*1000);
+    // For scroll mode: use scrollDuration (total seconds) if set, else use speed
+    let speed = r.speed;
+    let total, entryDelay;
+    if (mode === 'display') {
+      total = fade + dur + fade;
+      entryDelay = 0;
+    } else if (r.useScrollDuration && r.scrollDuration) {
+      // Time-based: total duration is exactly scrollDuration seconds
+      total = r.scrollDuration * 1000;
+      // Calculate px/s needed: total text height / (scrollDuration - entry time)
+      // Entry delay is approx screen height worth of travel
+      const estLines = (t.content||'').split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length/28)),0);
+      const totalPx  = estLines * (size * lineH) + (window.innerHeight||800);
+      speed = totalPx / r.scrollDuration; // px/s to complete in exactly scrollDuration
+      entryDelay = Math.round((window.innerHeight||800) / speed * 1000);
+    } else {
+      const estLines = (t.content||'').split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length/28)),0);
+      total = (estLines*(size*lineH)/speed)*1000;
+      entryDelay = Math.round((window.innerHeight||800)/speed*1000);
+    }
     let progStartTime = null;
     startTime = Date.now();
     progInt = setInterval(() => {
@@ -623,12 +646,7 @@ function initPanel(opts) {
   async function renderTextPages(idx) {
     const t = texts[idx]; if (!t||(!(t.content||'').trim())) return [];
     const r = resolveForText(t);
-    // Debug: show resolved values visibly
-    const _styles = JSON.parse(localStorage.getItem('tp_styles')||'[]');
-    const _st = t.styleId ? _styles.find(s=>String(s.id)===String(t.styleId)) : null;
-    const _dbg = `TEXT: "${t.title}"\nstyleId: ${t.styleId}\nStyle found: ${_st ? _st.name : 'NONE (using defaults)'}\nResolved size: ${r.size}px\nResolved italic: ${r.italic}\nResolved font: ${r.font}\nResolved weight: ${r.weight}\nResolved bgColor: ${r.bgColor}`;
-    console.log('[PNG Debug]', _dbg);
-    alert(_dbg);
+    console.log('[PNG] text:', t.title, 'styleId:', t.styleId, 'size:', r.size, 'italic:', r.italic);
     const SCALE = PNG_W/1920;
     const fontSize = Math.round((r.size||72)*SCALE);
     const padding  = Math.round((r.pad??80)*SCALE);
@@ -644,15 +662,23 @@ function initPanel(opts) {
     const maxLines = Math.floor((PNG_H-padding*2)/lineH);
     function wrap(text) {
       const lines = [];
-      for (const para of text.split('\n')) {
-        if (!para.trim()) { lines.push(''); continue; }
-        let line='';
-        for (const word of para.split(' ')) {
-          const test = line?line+' '+word:word;
-          if (ctx.measureText(test).width>maxWidth&&line) { lines.push(line); line=word; }
-          else line=test;
+      for (const inputLine of text.split('\n')) {
+        // Empty line = blank line, preserve it
+        if (!inputLine) { lines.push(''); continue; }
+        // If line fits in width, keep it as-is (respect manual breaks)
+        if (ctx.measureText(inputLine).width <= maxWidth) {
+          lines.push(inputLine);
+        } else {
+          // Line is too wide — word-wrap it but stay within the input line
+          let line = '';
+          for (const word of inputLine.split(' ')) {
+            const test = line ? line+' '+word : word;
+            if (ctx.measureText(test).width > maxWidth && line) {
+              lines.push(line); line = word;
+            } else { line = test; }
+          }
+          if (line) lines.push(line);
         }
-        if (line) lines.push(line);
       }
       return lines;
     }

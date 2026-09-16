@@ -236,14 +236,24 @@ function startProg(){
   clearInterval(progInt);
   const t=texts[curIdx];if(!t)return;
   const r=resolveForCue(t);
-  const mode=r.mode,speed=r.speed,size=r.size,lineH=r.lineH;
+  const mode=r.mode,size=r.size,lineH=r.lineH;
   const dur=r.duration*1000;
-  startTime=Date.now();
   const fadeDur2=r.fade*1000;
-  const total=mode==='display'
-    ? fadeDur2+dur+fadeDur2
-    : (()=>{const lines=(t.content||'').split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length/28)),0);return(lines*(size*lineH)/speed)*1000;})();
-  const entryDelay2=mode==='display'?0:Math.round((window.innerHeight||800)/speed*1000);
+  startTime=Date.now();
+  let speed=r.speed, total, entryDelay2;
+  if (mode==='display') {
+    total=fadeDur2+dur+fadeDur2; entryDelay2=0;
+  } else if (r.useScrollDuration&&r.scrollDuration) {
+    total=r.scrollDuration*1000;
+    const estLines=(t.content||'').split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length/28)),0);
+    const totalPx=estLines*(size*lineH)+(window.innerHeight||800);
+    speed=totalPx/r.scrollDuration;
+    entryDelay2=Math.round((window.innerHeight||800)/speed*1000);
+  } else {
+    const estLines=(t.content||'').split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length/28)),0);
+    total=(estLines*(size*lineH)/speed)*1000;
+    entryDelay2=Math.round((window.innerHeight||800)/speed*1000);
+  }
   let progStartTime2=null;
   progInt=setInterval(()=>{
     const now=Date.now();
