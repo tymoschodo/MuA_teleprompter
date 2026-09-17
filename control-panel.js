@@ -560,7 +560,8 @@ function initPanel(opts) {
     if (target>=texts.length) return;
     activateText(target); setState('running');
     const resolved = resolveForText(texts[target]);
-    broadcast({type:'cue', idx:curCueIdx, resolved});
+    const textContent = texts[target] ? texts[target].content || '' : '';
+    broadcast({type:'cue', idx:curCueIdx, resolved, textContent});
     startProg(); renderList();
   };
 

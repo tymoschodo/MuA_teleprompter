@@ -192,7 +192,8 @@ function doCue(){
   activateText(target);
   setState('running');
   const resolved = resolveForCue(texts[curIdx]);
-  broadcast({type:'cue', idx:curIdx, resolved});
+  const textContent = texts[curIdx] ? (texts[curIdx].content||'') : '';
+  broadcast({type:'cue', idx:curIdx, resolved, textContent});
   startProg();renderList();
 }
 function doBack(){

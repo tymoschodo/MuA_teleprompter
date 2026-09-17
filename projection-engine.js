@@ -81,7 +81,8 @@ function initProjection(opts) {
     const s=resolve();
     console.log('[Projection] cue', idx, 'italic:', s.italic, 'font:', s.font, 'size:', s.size, 'weight:', s.weight, 'full resolved:', JSON.stringify(s));
     applyVisual(s);
-    content.textContent=texts[idx]?(texts[idx].content||''):'';
+    const textData = texts && texts[idx];
+    content.textContent = textData ? (textData.content||'') : '';
     if(tag) tag.textContent=`${idx+1} / ${texts.length}`;
     wrap.style.transition=''; wrap.style.opacity='1';
     wrap.style.width=window.innerWidth+'px';
@@ -183,12 +184,30 @@ function initProjection(opts) {
   function handleMsg(msg) {
     if (!msg) return;
     if(msg.type==='cue') {
-      // Store the fully resolved settings from the conductor
       if (msg.resolved) lastResolved = msg.resolved;
+      // If text content is embedded in the cue message, use it directly
+      if (msg.textContent !== undefined) {
+        // Ensure texts array has a slot for this index with the content
+        if (!texts[msg.idx]) texts[msg.idx] = {};
+        texts[msg.idx].content = msg.textContent;
+      }
+      // Also sync full texts from local/Firebase in background
       const local = getT();
       if (local.length > 0) {
         texts = local;
         startText(msg.idx);
+      } else if (msg.textContent !== undefined) {
+        // We have the content embedded — start immediately
+        startText(msg.idx);
+        // Fetch full texts in background for subsequent cues
+        if (window.__fb) {
+          window.__fb.fbGetTexts(S).then(fbTexts => {
+            if (fbTexts && fbTexts.length > 0) {
+              texts = fbTexts;
+              localStorage.setItem(S+'texts', JSON.stringify(texts));
+            }
+          }).catch(()=>{});
+        }
       } else if (window.__fb) {
         window.__fb.fbGetTexts(S).then(fbTexts => {
           if (fbTexts && fbTexts.length > 0) {
@@ -196,7 +215,7 @@ function initProjection(opts) {
             localStorage.setItem(S+'texts', JSON.stringify(texts));
           }
           startText(msg.idx);
-        });
+        }).catch(() => startText(msg.idx));
       } else {
         startText(msg.idx);
       }
