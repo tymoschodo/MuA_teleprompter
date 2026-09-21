@@ -456,6 +456,7 @@ function initPanel(opts) {
       <div class="crow" id="stBgSwatches"></div>
 
       <label style="margin-top:.85rem">Position (Display)</label>
+      <div id="stPosPreview" style="width:100%;margin-bottom:.75rem;border-radius:4px;background:#111;cursor:crosshair"></div>
       <div class="pos-wrap">
         <div class="pos-picker" id="stPosPicker"></div>
         <div class="pos-sliders">
@@ -476,8 +477,15 @@ function initPanel(opts) {
     `;
     buildStyleSwatches('stColorSwatches', TC, st.textColor||opts.defaultColor);
     buildStyleSwatches('stBgSwatches',    BC, st.bgColor||opts.defaultBg);
-    buildPosPicker('stPosPicker','stPosX','stPosY','stPosXVal','stPosYVal', saveStyleEdit);
+    buildPosPicker('stPosPicker','stPosX','stPosY','stPosXVal','stPosYVal', () => {
+      saveStyleEdit();
+      const prev=document.getElementById('stPosPreview');
+      if(prev&&prev._syncFromSliders) prev._syncFromSliders();
+    });
     if (st.posX != null) syncPosPickerToValues('stPosPicker','stPosX','stPosY');
+
+    // Build draggable preview for style position
+    buildPosPreview('stPosPreview','stPosX','stPosY','stPosXVal','stPosYVal', saveStyleEdit);
   }
 
   function buildStyleSwatches(id, colors, cur) {
@@ -969,6 +977,16 @@ function initPanel(opts) {
   rebuildStyleDropdowns();
 
   buildPosPicker('ePosPicker','ePosX','ePosY','ePosXVal','ePosYVal', () => {
+    document.getElementById('ePosPicker').style.opacity='1';
+    const badge=document.getElementById('ePosStatus');
+    if(badge){badge.textContent='Individuell';badge.style.color='var(--ac2)';badge.style.borderColor='var(--ac2)';}
+    saveEdit();
+    const prev=document.getElementById('ePosPreview');
+    if(prev&&prev._syncFromSliders) prev._syncFromSliders();
+  });
+
+  // Build draggable position preview for per-text position
+  buildPosPreview('ePosPreview','ePosX','ePosY','ePosXVal','ePosYVal', () => {
     document.getElementById('ePosPicker').style.opacity='1';
     const badge=document.getElementById('ePosStatus');
     if(badge){badge.textContent='Individuell';badge.style.color='var(--ac2)';badge.style.borderColor='var(--ac2)';}
