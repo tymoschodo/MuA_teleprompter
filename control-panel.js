@@ -75,83 +75,111 @@ function syncPosPickerToValues(gridId, xId, yId) {
 // ── MAIN PANEL ──────────────────────────────────────────────────────────────
 
 // ── POSITION PREVIEW ────────────────────────────────────────────────────────
-function buildPosPreview(previewId, xId, yId, xValId, yValId, onChange) {
+// Projection reference: 3840x2160
+const PROJ_W = 3840, PROJ_H = 2160;
+
+function buildPosPreview(previewId, xId, yId, xValId, yValId, onChange, getStyle) {
   const container = document.getElementById(previewId);
   if (!container) return;
 
-  // Canvas proportional to 16:9
-  const W = container.offsetWidth || 280;
-  const H = Math.round(W * 9/16);
-  container.style.height = H + 'px';
+  // Fixed preview size — small but clear, 16:9
+  const PW = 240, PH = 135;
+  container.style.width    = PW + 'px';
+  container.style.height   = PH + 'px';
   container.style.position = 'relative';
-  container.style.background = '#111';
   container.style.borderRadius = '4px';
-  container.style.cursor = 'crosshair';
+  container.style.cursor   = 'crosshair';
   container.style.overflow = 'hidden';
   container.style.userSelect = 'none';
+  container.style.flexShrink = '0';
   container.innerHTML = '';
 
-  // Text block representation
+  // Scale factor: preview / projection
+  const scale = PW / PROJ_W; // ~0.0625
+
+  // Background
+  const bg = document.createElement('div');
+  bg.style.cssText = `position:absolute;inset:0;background:#111`;
+  container.appendChild(bg);
+
+  // Text block — rendered at correct proportional font size
   const block = document.createElement('div');
   block.style.cssText = `
     position:absolute;
-    background:rgba(232,255,71,0.15);
-    border:1.5px solid #e8ff47;
-    border-radius:3px;
-    padding:4px 8px;
-    font-family:'Syne',sans-serif;
-    font-size:11px;
-    font-weight:700;
-    color:#e8ff47;
-    white-space:nowrap;
     pointer-events:none;
-    transform:translate(-50%,-50%);
-    max-width:80%;
-    text-align:center;
-    line-height:1.4;
+    transform:translate(0,0);
+    white-space:pre;
+    line-height:1.5;
   `;
-  block.textContent = 'Text';
   container.appendChild(block);
 
-  // Crosshair lines
+  // Crosshairs
   const hLine = document.createElement('div');
-  hLine.style.cssText = 'position:absolute;left:0;right:0;height:1px;background:rgba(255,255,255,0.1);pointer-events:none';
+  hLine.style.cssText = 'position:absolute;left:0;right:0;height:1px;background:rgba(255,255,255,0.15);pointer-events:none';
   const vLine = document.createElement('div');
-  vLine.style.cssText = 'position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.1);pointer-events:none';
+  vLine.style.cssText = 'position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.15);pointer-events:none';
   container.appendChild(hLine);
   container.appendChild(vLine);
 
-  function setBlockContent() {
-    // Try to get the current text content for preview
+  function getCurrentStyle() {
+    if (getStyle) return getStyle();
+    // Try to read from current style/defaults
+    const styles = JSON.parse(localStorage.getItem('tp_styles')||'[]');
+    const eStyle = document.getElementById('eStyle');
+    const styleId = eStyle ? eStyle.value : null;
+    const st = styleId ? styles.find(s=>String(s.id)===String(styleId)) : null;
+    return {
+      font:      (st&&st.font)      || "'Syne',sans-serif",
+      size:      (st&&st.size)      || 72,
+      weight:    (st&&st.weight)    || '700',
+      italic:    !!(st&&st.italic),
+      textColor: (st&&st.textColor) || '#f0efe8',
+      bgColor:   (st&&st.bgColor)   || '#000000',
+      lineH:     (st&&st.lineH)     || 1.6,
+    };
+  }
+
+  function getCurrentText() {
     const eContent = document.getElementById('eContent');
-    const sName = document.getElementById('eStyle');
-    let preview = 'Text';
     if (eContent && eContent.value.trim()) {
-      const lines = eContent.value.split('\n').filter(l=>l.trim());
-      preview = lines.slice(0,2).join('\n');
-      if (lines.length > 2) preview += '\n…';
+      return eContent.value.split('\n').slice(0,3).join('\n');
     }
-    block.textContent = preview;
-    block.style.whiteSpace = preview.includes('\n') ? 'pre' : 'nowrap';
+    return 'Textvorschau';
   }
 
-  function posFromXY(posX, posY) {
-    // posX/posY are 0-100%
-    // Map to pixel position within container
-    const bw = block.offsetWidth  || 80;
-    const bh = block.offsetHeight || 30;
-    const margin = 2; // px from edge
-    const px = margin + (posX / 100) * (W - margin*2);
-    const py = margin + (posY / 100) * (H - margin*2);
-    return { px, py };
-  }
+  function updateBlock(posX, posY) {
+    const s = getCurrentStyle();
+    const txt = getCurrentText();
 
-  function updateBlockPos(posX, posY) {
-    const { px, py } = posFromXY(posX, posY);
+    // Scale font size from projection to preview
+    const scaledSize = Math.max(6, Math.round(s.size * scale));
+    const rawFont = (s.font||"'Syne',sans-serif").replace(/'/g,'');
+
+    // Background color
+    bg.style.background = s.bgColor || '#111';
+
+    // Text styling
+    block.style.fontFamily   = rawFont;
+    block.style.fontSize     = scaledSize + 'px';
+    block.style.fontWeight   = s.weight || '700';
+    block.style.fontStyle    = s.italic ? 'italic' : 'normal';
+    block.style.color        = s.textColor || '#f0efe8';
+    block.style.lineHeight   = s.lineH || 1.6;
+    block.textContent        = txt;
+
+    // Position: posX/posY are 0-100% of the space available for the text block
+    // Match the projection engine: position is % of (screen - block) size
+    const bw = block.offsetWidth  || 0;
+    const bh = block.offsetHeight || 0;
+    const availW = PW - bw;
+    const availH = PH - bh;
+    const px = Math.max(0, (posX / 100) * availW);
+    const py = Math.max(0, (posY / 100) * availH);
+
     block.style.left = px + 'px';
     block.style.top  = py + 'px';
-    hLine.style.top  = py + 'px';
-    vLine.style.left = px + 'px';
+    hLine.style.top  = (py + bh/2) + 'px';
+    vLine.style.left = (px + bw/2) + 'px';
   }
 
   function xyFromEvent(e) {
@@ -167,66 +195,42 @@ function buildPosPreview(previewId, xId, yId, xValId, yValId, onChange) {
   }
 
   function applyPos(posX, posY) {
-    // Update sliders
     const xEl = document.getElementById(xId);
     const yEl = document.getElementById(yId);
     const xVEl = document.getElementById(xValId);
     const yVEl = document.getElementById(yValId);
-    if (xEl) xEl.value = posX;
-    if (yEl) yEl.value = posY;
+    if (xEl)  xEl.value = posX;
+    if (yEl)  yEl.value = posY;
     if (xVEl) xVEl.textContent = posX + '%';
     if (yVEl) yVEl.textContent = posY + '%';
-    // Update picker
-    if (typeof syncPosPickerToValues === 'function') {
-      const pickerId = xId.replace('PosX','PosPicker').replace('posX','posPicker');
-      syncPosPickerToValues(pickerId, xId, yId);
-    }
-    updateBlockPos(posX, posY);
+    // Sync grid picker
+    const pickerId = xId === 'ePosX' ? 'ePosPicker' : xId === 'stPosX' ? 'stPosPicker' : null;
+    if (pickerId && typeof syncPosPickerToValues === 'function') syncPosPickerToValues(pickerId, xId, yId);
+    updateBlock(posX, posY);
     onChange();
   }
 
-  // Init position from current slider values
   function syncFromSliders() {
     const xEl = document.getElementById(xId);
     const yEl = document.getElementById(yId);
-    const posX = xEl ? +xEl.value : 50;
-    const posY = yEl ? +yEl.value : 50;
-    setBlockContent();
-    updateBlockPos(posX, posY);
+    updateBlock(xEl ? +xEl.value : 50, yEl ? +yEl.value : 50);
   }
 
   let dragging = false;
+  container.addEventListener('mousedown',  e => { e.preventDefault(); dragging=true; applyPos(...Object.values(xyFromEvent(e))); });
+  container.addEventListener('mousemove',  e => { if(!dragging)return; e.preventDefault(); applyPos(...Object.values(xyFromEvent(e))); });
+  container.addEventListener('mouseup',    () => dragging=false);
+  container.addEventListener('mouseleave', () => dragging=false);
+  container.addEventListener('touchstart', e => { e.preventDefault(); dragging=true; applyPos(...Object.values(xyFromEvent(e))); }, {passive:false});
+  container.addEventListener('touchmove',  e => { if(!dragging)return; e.preventDefault(); applyPos(...Object.values(xyFromEvent(e))); }, {passive:false});
+  container.addEventListener('touchend',   () => dragging=false);
 
-  function onStart(e) {
-    e.preventDefault();
-    dragging = true;
-    const { posX, posY } = xyFromEvent(e);
-    applyPos(posX, posY);
-  }
-  function onMove(e) {
-    if (!dragging) return;
-    e.preventDefault();
-    const { posX, posY } = xyFromEvent(e);
-    applyPos(posX, posY);
-  }
-  function onEnd() { dragging = false; }
-
-  container.addEventListener('mousedown',  onStart);
-  container.addEventListener('mousemove',  onMove);
-  container.addEventListener('mouseup',    onEnd);
-  container.addEventListener('mouseleave', onEnd);
-  container.addEventListener('touchstart', onStart, {passive:false});
-  container.addEventListener('touchmove',  onMove,  {passive:false});
-  container.addEventListener('touchend',   onEnd);
-
-  // Expose refresh function so we can call it when text changes
   container._syncFromSliders = syncFromSliders;
   syncFromSliders();
 }
 
-// Refresh all previews when text content changes
 function refreshPosPreviews() {
-  ['ePosPreview','stPosPreview','sPosPreview'].forEach(id => {
+  ['ePosPreview','stPosPreview'].forEach(id => {
     const el = document.getElementById(id);
     if (el && el._syncFromSliders) el._syncFromSliders();
   });
@@ -456,7 +460,9 @@ function initPanel(opts) {
       <div class="crow" id="stBgSwatches"></div>
 
       <label style="margin-top:.85rem">Position (Display)</label>
-      <div id="stPosPreview" style="width:100%;margin-bottom:.75rem;border-radius:4px;background:#111;cursor:crosshair"></div>
+      <div style="display:flex;gap:.75rem;align-items:flex-start;margin-bottom:.5rem">
+        <div id="stPosPreview" style="border-radius:4px;border:1px solid var(--bd);flex-shrink:0"></div>
+        <div style="flex:1">
       <div class="pos-wrap">
         <div class="pos-picker" id="stPosPicker"></div>
         <div class="pos-sliders">
@@ -474,6 +480,8 @@ function initPanel(opts) {
           </div>
         </div>
       </div>
+        </div>
+      </div>
     `;
     buildStyleSwatches('stColorSwatches', TC, st.textColor||opts.defaultColor);
     buildStyleSwatches('stBgSwatches',    BC, st.bgColor||opts.defaultBg);
@@ -484,8 +492,19 @@ function initPanel(opts) {
     });
     if (st.posX != null) syncPosPickerToValues('stPosPicker','stPosX','stPosY');
 
-    // Build draggable preview for style position
-    buildPosPreview('stPosPreview','stPosX','stPosY','stPosXVal','stPosYVal', saveStyleEdit);
+    // Build draggable preview for style position — reads live values from editor
+    buildPosPreview('stPosPreview','stPosX','stPosY','stPosXVal','stPosYVal', saveStyleEdit, () => {
+      const gv = id => { const e=document.getElementById(id); return e?e.value:null; };
+      return {
+        font:      gv('stFont')   || "'Syne',sans-serif",
+        size:      gv('stSize')   ? +gv('stSize') : 72,
+        weight:    gv('stWeight') || '700',
+        italic:    document.getElementById('stItalic')  ? document.getElementById('stItalic').checked  : false,
+        textColor: (()=>{ const e=document.querySelector('#stColorSwatches .cs.sel'); return e?e.dataset.c:'#f0efe8'; })(),
+        bgColor:   (()=>{ const e=document.querySelector('#stBgSwatches .cs.sel');    return e?e.dataset.c:'#000000'; })(),
+        lineH:     gv('stLineH') ? +(gv('stLineH')/10).toFixed(1) : 1.6,
+      };
+    });
   }
 
   function buildStyleSwatches(id, colors, cur) {
@@ -533,6 +552,7 @@ function initPanel(opts) {
     if (ga('stColorSwatches')) st.textColor = ga('stColorSwatches');
     if (ga('stBgSwatches'))    st.bgColor   = ga('stBgSwatches');
     saveStyles();
+    setTimeout(()=>{ const el=document.getElementById('stPosPreview'); if(el&&el._syncFromSliders) el._syncFromSliders(); }, 30);
   };
 
   window.addStyle = function() {
