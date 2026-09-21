@@ -73,6 +73,165 @@ function syncPosPickerToValues(gridId, xId, yId) {
 }
 
 // ── MAIN PANEL ──────────────────────────────────────────────────────────────
+
+// ── POSITION PREVIEW ────────────────────────────────────────────────────────
+function buildPosPreview(previewId, xId, yId, xValId, yValId, onChange) {
+  const container = document.getElementById(previewId);
+  if (!container) return;
+
+  // Canvas proportional to 16:9
+  const W = container.offsetWidth || 280;
+  const H = Math.round(W * 9/16);
+  container.style.height = H + 'px';
+  container.style.position = 'relative';
+  container.style.background = '#111';
+  container.style.borderRadius = '4px';
+  container.style.cursor = 'crosshair';
+  container.style.overflow = 'hidden';
+  container.style.userSelect = 'none';
+  container.innerHTML = '';
+
+  // Text block representation
+  const block = document.createElement('div');
+  block.style.cssText = `
+    position:absolute;
+    background:rgba(232,255,71,0.15);
+    border:1.5px solid #e8ff47;
+    border-radius:3px;
+    padding:4px 8px;
+    font-family:'Syne',sans-serif;
+    font-size:11px;
+    font-weight:700;
+    color:#e8ff47;
+    white-space:nowrap;
+    pointer-events:none;
+    transform:translate(-50%,-50%);
+    max-width:80%;
+    text-align:center;
+    line-height:1.4;
+  `;
+  block.textContent = 'Text';
+  container.appendChild(block);
+
+  // Crosshair lines
+  const hLine = document.createElement('div');
+  hLine.style.cssText = 'position:absolute;left:0;right:0;height:1px;background:rgba(255,255,255,0.1);pointer-events:none';
+  const vLine = document.createElement('div');
+  vLine.style.cssText = 'position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.1);pointer-events:none';
+  container.appendChild(hLine);
+  container.appendChild(vLine);
+
+  function setBlockContent() {
+    // Try to get the current text content for preview
+    const eContent = document.getElementById('eContent');
+    const sName = document.getElementById('eStyle');
+    let preview = 'Text';
+    if (eContent && eContent.value.trim()) {
+      const lines = eContent.value.split('\n').filter(l=>l.trim());
+      preview = lines.slice(0,2).join('\n');
+      if (lines.length > 2) preview += '\n…';
+    }
+    block.textContent = preview;
+    block.style.whiteSpace = preview.includes('\n') ? 'pre' : 'nowrap';
+  }
+
+  function posFromXY(posX, posY) {
+    // posX/posY are 0-100%
+    // Map to pixel position within container
+    const bw = block.offsetWidth  || 80;
+    const bh = block.offsetHeight || 30;
+    const margin = 2; // px from edge
+    const px = margin + (posX / 100) * (W - margin*2);
+    const py = margin + (posY / 100) * (H - margin*2);
+    return { px, py };
+  }
+
+  function updateBlockPos(posX, posY) {
+    const { px, py } = posFromXY(posX, posY);
+    block.style.left = px + 'px';
+    block.style.top  = py + 'px';
+    hLine.style.top  = py + 'px';
+    vLine.style.left = px + 'px';
+  }
+
+  function xyFromEvent(e) {
+    const rect = container.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const rx = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const ry = Math.max(0, Math.min(1, (clientY - rect.top)  / rect.height));
+    return {
+      posX: Math.round(rx * 100),
+      posY: Math.round(ry * 100)
+    };
+  }
+
+  function applyPos(posX, posY) {
+    // Update sliders
+    const xEl = document.getElementById(xId);
+    const yEl = document.getElementById(yId);
+    const xVEl = document.getElementById(xValId);
+    const yVEl = document.getElementById(yValId);
+    if (xEl) xEl.value = posX;
+    if (yEl) yEl.value = posY;
+    if (xVEl) xVEl.textContent = posX + '%';
+    if (yVEl) yVEl.textContent = posY + '%';
+    // Update picker
+    if (typeof syncPosPickerToValues === 'function') {
+      const pickerId = xId.replace('PosX','PosPicker').replace('posX','posPicker');
+      syncPosPickerToValues(pickerId, xId, yId);
+    }
+    updateBlockPos(posX, posY);
+    onChange();
+  }
+
+  // Init position from current slider values
+  function syncFromSliders() {
+    const xEl = document.getElementById(xId);
+    const yEl = document.getElementById(yId);
+    const posX = xEl ? +xEl.value : 50;
+    const posY = yEl ? +yEl.value : 50;
+    setBlockContent();
+    updateBlockPos(posX, posY);
+  }
+
+  let dragging = false;
+
+  function onStart(e) {
+    e.preventDefault();
+    dragging = true;
+    const { posX, posY } = xyFromEvent(e);
+    applyPos(posX, posY);
+  }
+  function onMove(e) {
+    if (!dragging) return;
+    e.preventDefault();
+    const { posX, posY } = xyFromEvent(e);
+    applyPos(posX, posY);
+  }
+  function onEnd() { dragging = false; }
+
+  container.addEventListener('mousedown',  onStart);
+  container.addEventListener('mousemove',  onMove);
+  container.addEventListener('mouseup',    onEnd);
+  container.addEventListener('mouseleave', onEnd);
+  container.addEventListener('touchstart', onStart, {passive:false});
+  container.addEventListener('touchmove',  onMove,  {passive:false});
+  container.addEventListener('touchend',   onEnd);
+
+  // Expose refresh function so we can call it when text changes
+  container._syncFromSliders = syncFromSliders;
+  syncFromSliders();
+}
+
+// Refresh all previews when text content changes
+function refreshPosPreviews() {
+  ['ePosPreview','stPosPreview','sPosPreview'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el._syncFromSliders) el._syncFromSliders();
+  });
+}
+
 function initPanel(opts) {
   const S = opts.namespace;
   const TC = ['#000000','#111111','#f0efe8','#ffffff','#e8ff47','#ff6b35','#00ffcc'];
@@ -483,6 +642,7 @@ function initPanel(opts) {
 
   window.saveEdit = function() {
     if (selIdx<0||selIdx>=texts.length) return;
+    setTimeout(refreshPosPreviews, 50);
     const t = texts[selIdx];
     t.title   = document.getElementById('eTitle').value;
     t.cue     = document.getElementById('eCue').value;
@@ -671,23 +831,37 @@ function initPanel(opts) {
     const maxWidth = PNG_W-padding*2;
     const maxLines = Math.floor((PNG_H-padding*2)/lineH);
     function wrap(text) {
+      // Split on actual newline characters — these are the user's manual line breaks
+      // Only word-wrap a line if it's physically too wide for the canvas
       const lines = [];
-      for (const inputLine of text.split('\n')) {
-        // Empty line = blank line, preserve it
-        if (!inputLine) { lines.push(''); continue; }
-        // If line fits in width, keep it as-is (respect manual breaks)
-        if (ctx.measureText(inputLine).width <= maxWidth) {
+      const inputLines = text.split('\n');
+      for (let i = 0; i < inputLines.length; i++) {
+        const inputLine = inputLines[i];
+        // Preserve blank lines exactly
+        if (inputLine === '' || inputLine.trim() === '') {
+          lines.push('');
+          continue;
+        }
+        // Measure this line at the scaled font size
+        const lineWidth = ctx.measureText(inputLine).width;
+        if (lineWidth <= maxWidth) {
+          // Fits — keep exactly as typed
           lines.push(inputLine);
         } else {
-          // Line is too wide — word-wrap it but stay within the input line
-          let line = '';
-          for (const word of inputLine.split(' ')) {
-            const test = line ? line+' '+word : word;
-            if (ctx.measureText(test).width > maxWidth && line) {
-              lines.push(line); line = word;
-            } else { line = test; }
+          // Too wide for canvas — must word-wrap, but only within this input line
+          let current = '';
+          const words = inputLine.split(' ');
+          for (let w = 0; w < words.length; w++) {
+            const word = words[w];
+            const candidate = current ? current + ' ' + word : word;
+            if (ctx.measureText(candidate).width > maxWidth && current !== '') {
+              lines.push(current);
+              current = word;
+            } else {
+              current = candidate;
+            }
           }
-          if (line) lines.push(line);
+          if (current) lines.push(current);
         }
       }
       return lines;
