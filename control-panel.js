@@ -845,85 +845,96 @@ function initPanel(opts) {
     const t = texts[idx]; if (!t||(!(t.content||'').trim())) return [];
     const r = resolveForText(t);
     console.log('[PNG] text:', t.title, 'styleId:', t.styleId, 'size:', r.size, 'italic:', r.italic);
-    const SCALE = PNG_W/1920;
-    const fontSize = Math.round((r.size||72)*SCALE);
-    const padding  = Math.round((r.pad??80)*SCALE);
-    const lineHeightM = r.lineH||1.6;
-    const fontStr  = `${r.italic?'italic ':''} ${r.weight||'700'} ${fontSize}px ${(r.font||"'Syne',sans-serif").replace(/'/g,'')}`.trim();
-    const canvas   = document.createElement('canvas');
-    canvas.width   = PNG_W; canvas.height = PNG_H;
-    const ctx      = canvas.getContext('2d');
+
+    const SCALE     = PNG_W / 1920;
+    const fontSize  = Math.round((r.size||72) * SCALE);
+    const padding   = Math.round((r.pad??80) * SCALE);
+    const lineH     = Math.round(fontSize * (r.lineH||1.6));
+    const maxWidth  = PNG_W - padding * 2;
+    const fontStr   = `${r.italic?'italic ':''} ${r.weight||'700'} ${fontSize}px ${(r.font||"'Syne',sans-serif").replace(/'/g,'')}`.trim();
+
+    // Measure on a scratch canvas first
+    const scratch = document.createElement('canvas');
+    scratch.width = PNG_W; scratch.height = PNG_H;
+    const sctx = scratch.getContext('2d');
     try { await document.fonts.ready; } catch(e) {}
-    ctx.font       = fontStr;
-    const lineH    = Math.round(fontSize*lineHeightM);
-    const maxWidth = PNG_W-padding*2;
-    const maxLines = Math.floor((PNG_H-padding*2)/lineH);
+    sctx.font = fontStr;
+
+    // Wrap — respect manual line breaks, only word-wrap if a line is too wide
     function wrap(text) {
-      // Split on actual newline characters — these are the user's manual line breaks
-      // Only word-wrap a line if it's physically too wide for the canvas
       const lines = [];
-      const inputLines = text.split('\n');
-      for (let i = 0; i < inputLines.length; i++) {
-        const inputLine = inputLines[i];
-        // Preserve blank lines exactly
-        if (inputLine === '' || inputLine.trim() === '') {
-          lines.push('');
-          continue;
-        }
-        // Measure this line at the scaled font size
-        const lineWidth = ctx.measureText(inputLine).width;
-        if (lineWidth <= maxWidth) {
-          // Fits — keep exactly as typed
+      for (const inputLine of text.split('\n')) {
+        if (inputLine === '' || inputLine.trim() === '') { lines.push(''); continue; }
+        if (sctx.measureText(inputLine).width <= maxWidth) {
           lines.push(inputLine);
         } else {
-          // Too wide for canvas — must word-wrap, but only within this input line
           let current = '';
-          const words = inputLine.split(' ');
-          for (let w = 0; w < words.length; w++) {
-            const word = words[w];
-            const candidate = current ? current + ' ' + word : word;
-            if (ctx.measureText(candidate).width > maxWidth && current !== '') {
-              lines.push(current);
-              current = word;
-            } else {
-              current = candidate;
-            }
+          for (const word of inputLine.split(' ')) {
+            const candidate = current ? current+' '+word : word;
+            if (sctx.measureText(candidate).width > maxWidth && current) {
+              lines.push(current); current = word;
+            } else { current = candidate; }
           }
           if (current) lines.push(current);
         }
       }
       return lines;
     }
+
     const allLines = wrap(t.content||'');
-    const pages = [];
-    for (let i=0;i<allLines.length;i+=maxLines) pages.push(allLines.slice(i,i+maxLines));
-    if (!pages.length) return [];
-    const baseName = sanitize(t.title);
-    const result = [];
-    for (let p=0;p<pages.length;p++) {
-      ctx.clearRect(0,0,PNG_W,PNG_H);
-      ctx.fillStyle = r.bgColor; ctx.fillRect(0,0,PNG_W,PNG_H);
-      ctx.fillStyle = r.textColor; ctx.font=fontStr;
-      ctx.textAlign = r.align==='center'?'center':r.align==='right'?'right':'left';
-      const x = r.align==='center'?PNG_W/2:r.align==='right'?PNG_W-padding:padding;
-      const pageLines = pages[p];
-      const totalH = pageLines.length*lineH;
+    if (!allLines.length) return [];
+
+    // Calculate how many lines fit in one PNG_H screen (with padding)
+    const linesPerScreen = Math.floor((PNG_H - padding * 2) / lineH);
+
+    // How many screens do we need? Round up to next whole screen
+    const screensNeeded = Math.ceil(allLines.length / linesPerScreen);
+    const canvasHeight  = screensNeeded * PNG_H; // always a multiple of PNG_H
+
+    // Build one tall canvas
+    const canvas = document.createElement('canvas');
+    canvas.width  = PNG_W;
+    canvas.height = canvasHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.font = fontStr;
+
+    // Fill background
+    ctx.fillStyle = r.bgColor;
+    ctx.fillRect(0, 0, PNG_W, canvasHeight);
+
+    // Draw text
+    ctx.fillStyle = r.textColor;
+    ctx.textAlign = r.align==='center'?'center':r.align==='right'?'right':'left';
+    const x = r.align==='center' ? PNG_W/2 : r.align==='right' ? PNG_W-padding : padding;
+
+    // posY positions the text block within the first screen;
+    // for tall canvases, start at top padding instead so it's predictable
+    const totalTextH = allLines.length * lineH;
+    let startY;
+    if (screensNeeded === 1) {
       const posY = typeof r.posY==='number' ? r.posY : 50;
-      const startY = Math.round((posY/100)*(PNG_H-totalH))+fontSize;
-      let y = startY;
-      for (const line of pageLines) {
-        ctx.fillText(line,x,y);
-        if (r.underline&&line.trim()) {
-          const w=ctx.measureText(line).width;
-          const ux=r.align==='center'?x-w/2:r.align==='right'?x-w:x;
-          ctx.fillRect(ux,y+Math.round(fontSize*0.12),w,Math.max(2,Math.round(fontSize*0.05)));
-        }
-        y+=lineH;
-      }
-      const blob = await new Promise(res=>canvas.toBlob(res,'image/png'));
-      result.push({blob, name:pages.length>1?`${baseName}-${p+1}.png`:`${baseName}.png`});
+      startY = Math.round((posY/100) * (PNG_H - totalTextH)) + fontSize;
+    } else {
+      // Multi-screen: start from top with padding
+      startY = padding + fontSize;
     }
-    return result;
+
+    let y = startY;
+    for (const line of allLines) {
+      if (line !== '') {
+        ctx.fillText(line, x, y);
+        if (r.underline && line.trim()) {
+          const w  = ctx.measureText(line).width;
+          const ux = r.align==='center'?x-w/2 : r.align==='right'?x-w : x;
+          ctx.fillRect(ux, y+Math.round(fontSize*0.12), w, Math.max(2, Math.round(fontSize*0.05)));
+        }
+      }
+      y += lineH;
+    }
+
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+    const suffix = screensNeeded > 1 ? `-${screensNeeded}x` : '';
+    return [{ blob, name: `${sanitize(t.title)}${suffix}.png` }];
   }
 
   function dlBlob(blob,name) {
@@ -936,9 +947,9 @@ function initPanel(opts) {
   }
 
   window.exportTextAsPNG = async function(idx) {
-    const pages = await renderTextPages(idx);
-    if (!pages.length) { alert('Kein Inhalt.'); return; }
-    for (const {blob,name} of pages) dlBlob(blob,name);
+    const result = await renderTextPages(idx);
+    if (!result.length) { alert('Kein Inhalt.'); return; }
+    dlBlob(result[0].blob, result[0].name);
   };
 
   window.exportAllAsPNG = async function() {
