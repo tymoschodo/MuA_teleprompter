@@ -46,6 +46,8 @@ function initProjection(opts) {
     content.style.fontStyle         = s.italic    ? 'italic' : 'normal';
     content.style.textDecoration    = s.underline ? 'underline' : 'none';
     content.style.textAlign         = s.align;
+    // justify needs white-space:normal; otherwise keep pre-wrap for line breaks
+    content.style.whiteSpace        = s.align === 'justify' ? 'normal' : 'pre-wrap';
     // Also scale padding proportionally
     const scaledPad = Math.round((s.pad / REF_WIDTH) * window.innerWidth);
     content.style.padding           = `0 ${scaledPad}px`;

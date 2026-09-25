@@ -92,3 +92,23 @@ hr{border:none;border-top:1px solid var(--bd);margin:.75rem 0}
   transition:all .14s;line-height:1;
 }
 .png-btn:hover{border-color:var(--ac);color:var(--ac);background:rgba(232,255,71,.08)}
+
+/* ── FORMAT BUTTONS ── */
+.fmt-row { display:flex; gap:.3rem; flex-wrap:wrap; margin-bottom:.4rem; }
+.fmt-btn {
+  font-family: var(--mono);
+  font-size: .8rem;
+  font-weight: 700;
+  width: 2rem; height: 2rem;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent;
+  border: 1px solid var(--bd);
+  border-radius: 3px;
+  color: var(--mu);
+  cursor: pointer;
+  transition: border-color .15s, color .15s, background .15s;
+  padding: 0;
+  line-height: 1;
+}
+.fmt-btn:hover { border-color: var(--fg); color: var(--fg); }
+.fmt-btn.on    { border-color: var(--ac2); color: var(--ac2); background: rgba(232,255,71,.08); }

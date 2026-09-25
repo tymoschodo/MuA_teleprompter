@@ -431,20 +431,21 @@ function initPanel(opts) {
               oninput="document.getElementById('stLineHVal').textContent=(this.value/10).toFixed(1);saveStyleEdit()">
             <span class="rval" id="stLineHVal">${parseFloat(st.lineH||1.6).toFixed(1)}</span>
           </div>
-          <div class="trow" style="margin-top:.5rem">
-            <label class="tog"><input type="checkbox" id="stItalic" onchange="saveStyleEdit()" ${st.italic?'checked':''}><span class="tslide"></span></label>
-            <span class="tlbl">Kursiv</span>
+          <label style="margin-top:.6rem">Schriftstil</label>
+          <div class="fmt-row">
+            <button class="fmt-btn ${st.italic   ?'on':''}" id="stItalicBtn"    onclick="toggleStItalic()"    title="Kursiv"         style="font-style:italic;font-family:serif">I</button>
+            <button class="fmt-btn ${st.underline?'on':''}" id="stUnderlineBtn" onclick="toggleStUnderline()" title="Unterstrichen"   style="text-decoration:underline">U</button>
           </div>
-          <div class="trow">
-            <label class="tog"><input type="checkbox" id="stUnderline" onchange="saveStyleEdit()" ${st.underline?'checked':''}><span class="tslide"></span></label>
-            <span class="tlbl">Unterstrichen</span>
-          </div>
+          <input type="hidden" id="stItalic"    value="${st.italic   ?'true':'false'}">
+          <input type="hidden" id="stUnderline" value="${st.underline?'true':'false'}">
           <label>Ausrichtung</label>
-          <select id="stAlign" onchange="saveStyleEdit()">
-            <option value="left"   ${st.align==='left'  ?'selected':''}>Linksbündig</option>
-            <option value="center" ${st.align==='center'?'selected':''}>Zentriert</option>
-            <option value="right"  ${st.align==='right' ?'selected':''}>Rechtsbündig</option>
-          </select>
+          <div class="fmt-row" id="stAlignBtns">
+            <button class="fmt-btn ${st.align==='left'   ||!st.align?'on':''}" onclick="setStAlign('left')"    title="Linksbündig">&#8676;</button>
+            <button class="fmt-btn ${st.align==='center' ?'on':''}"             onclick="setStAlign('center')"  title="Zentriert">&#8596;</button>
+            <button class="fmt-btn ${st.align==='right'  ?'on':''}"             onclick="setStAlign('right')"   title="Rechtsbündig">&#8677;</button>
+            <button class="fmt-btn ${st.align==='justify'?'on':''}"             onclick="setStAlign('justify')" title="Blocksatz">&#8644;</button>
+          </div>
+          <input type="hidden" id="stAlign" value="${st.align||'left'}">
           <label>Seitenränder</label>
           <div class="rrow">
             <input type="range" id="stPad" min="0" max="300" step="10" value="${st.pad??80}"
@@ -520,6 +521,36 @@ function initPanel(opts) {
     });
   }
 
+  window.setStAlign = function(val) {
+    const el = document.getElementById('stAlign');
+    if (el) el.value = val;
+    document.querySelectorAll('#stAlignBtns .fmt-btn').forEach(b => b.classList.remove('on'));
+    const map = {left:0,center:1,right:2,justify:3};
+    const btns = document.querySelectorAll('#stAlignBtns .fmt-btn');
+    if (btns[map[val]]) btns[map[val]].classList.add('on');
+    saveStyleEdit();
+  };
+
+  window.toggleStItalic = function() {
+    const el = document.getElementById('stItalic');
+    if (!el) return;
+    const next = el.value !== 'true';
+    el.value = next ? 'true' : 'false';
+    const btn = document.getElementById('stItalicBtn');
+    if (btn) btn.classList.toggle('on', next);
+    saveStyleEdit();
+  };
+
+  window.toggleStUnderline = function() {
+    const el = document.getElementById('stUnderline');
+    if (!el) return;
+    const next = el.value !== 'true';
+    el.value = next ? 'true' : 'false';
+    const btn = document.getElementById('stUnderlineBtn');
+    if (btn) btn.classList.toggle('on', next);
+    saveStyleEdit();
+  };
+
   window.saveStyleEdit = function() {
     if (selStyleIdx < 0 || selStyleIdx >= styles.length) {
       console.warn('[saveStyleEdit] selStyleIdx out of range:', selStyleIdx, 'styles.length:', styles.length);
@@ -543,9 +574,9 @@ function initPanel(opts) {
     st.size      = gv('stSize')     ? +gv('stSize')     : st.size;
     st.weight    = gv('stWeight')   || st.weight;
     st.lineH     = gv('stLineH')    ? +(gv('stLineH')/10).toFixed(1) : st.lineH;
-    st.italic    = gc('stItalic');
-    st.underline = gc('stUnderline');
-    st.align     = gv('stAlign');
+    st.italic    = gv('stItalic')   === 'true';
+    st.underline = gv('stUnderline') === 'true';
+    st.align     = gv('stAlign') || 'left';
     st.pad       = gv('stPad') !== null ? +gv('stPad') : st.pad;
     st.posX      = gv('stPosX') !== null ? +gv('stPosX') : st.posX;
     st.posY      = gv('stPosY') !== null ? +gv('stPosY') : st.posY;
@@ -904,8 +935,9 @@ function initPanel(opts) {
 
     // Draw text
     ctx.fillStyle = r.textColor;
-    ctx.textAlign = r.align==='center'?'center':r.align==='right'?'right':'left';
-    const x = r.align==='center' ? PNG_W/2 : r.align==='right' ? PNG_W-padding : padding;
+    const isJustify = r.align === 'justify';
+    ctx.textAlign = isJustify ? 'left' : (r.align==='center'?'center':r.align==='right'?'right':'left');
+    const x = (isJustify||r.align==='left') ? padding : r.align==='center' ? PNG_W/2 : PNG_W-padding;
 
     // posY positions the text block within the first screen;
     // for tall canvases, start at top padding instead so it's predictable
